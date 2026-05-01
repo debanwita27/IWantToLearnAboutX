@@ -1,0 +1,1344 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "depth_modes": {
+      "depth_first": "Skip surface level. Start at internals, failure modes, production reality, academic lineage.",
+      "breadth_first": "Start with accessible overview, spiral inward to niche across the 7-day arc."
+    }
+  },
+  "fields": [
+    {
+      "id": "software",
+      "name": "Software Engineering",
+      "depth_mode": "depth_first",
+      "subfields": [
+        {
+          "id": "distributed_systems",
+          "name": "Distributed Systems",
+          "topics": [
+            {
+              "id": "consensus_algorithms",
+              "name": "Consensus Algorithms",
+              "subtopics": ["Raft leader election", "Paxos log replication", "ZAB (Zookeeper)", "safety vs liveness", "quorum reads"],
+              "niche_topics": ["Multi-Raft scaling", "Flexible Paxos (Howard 2016)", "EPaxos leaderless consensus", "Byzantine fault tolerance in production", "Viewstamped Replication Revisited", "CASPaxos single-decree"],
+              "references": {
+                "easy": ["'Designing Data-Intensive Applications' ch.9 — Kleppmann"],
+                "mid": ["MIT 6.5840 Raft lab + lecture notes", "The Raft paper — Ongaro & Ousterhout (2014)"],
+                "deep": ["Paxos Made Simple — Lamport (2001)", "In Search of an Understandable Consensus Algorithm — Ongaro PhD thesis"],
+                "niche": ["Heidi Howard's blog on Flexible Paxos", "TiKV Multi-Raft source code", "FoundationDB engineering blog", "CockroachDB consensus deep dives"]
+              }
+            },
+            {
+              "id": "storage_engines",
+              "name": "Storage Engines",
+              "subtopics": ["LSM-tree vs B-tree", "write/read/space amplification", "compaction strategies", "WAL design", "MVCC"],
+              "niche_topics": ["WiscKey key-value separation", "Titan (TiKV's blob store)", "RocksDB Monkey filter", "LOCS SSD-aware LSM", "SILK adaptive I/O scheduler"],
+              "references": {
+                "easy": ["'Designing Data-Intensive Applications' ch.3 — Kleppmann"],
+                "mid": ["deep-dive-databases (natenberenstein GitHub)", "LevelDB implementation notes — Jeff Dean"],
+                "deep": ["The Log-Structured Merge-Tree — O'Neil et al. (1996)", "Monkey: Optimal Navigable Key-Value Store — Dayan et al."],
+                "niche": ["RocksDB wiki + Tuning Guide", "WiscKey paper (FAST '16)", "Badger (dgraph) internals blog"]
+              }
+            },
+            {
+              "id": "distributed_transactions",
+              "name": "Distributed Transactions",
+              "subtopics": ["2PC", "3PC", "Saga pattern", "CRDT vs OT", "snapshot isolation across shards"],
+              "niche_topics": ["Percolator (Google) transaction model", "Spanner TrueTime", "Calvin deterministic DB", "MVTO vs S2PL", "RAMP transactions"],
+              "references": {
+                "easy": ["'Database Internals' ch.13 — Petrov"],
+                "mid": ["'Designing Data-Intensive Applications' ch.7 — Kleppmann", "Spanner paper — Corbett et al. (2012)"],
+                "deep": ["Calvin: Fast Distributed Transactions for Partitioned Database Systems", "Percolator paper (OSDI '10)"],
+                "niche": ["FoundationDB Layer Concept paper", "CockroachDB parallel commits blog", "TiDB transaction internals"]
+              }
+            },
+            {
+              "id": "crdt_theory",
+              "name": "CRDTs — Conflict-Free Replicated Data Types",
+              "subtopics": ["state-based vs op-based", "G-counter / PN-counter", "OR-Set", "LWW-Register", "MRDT"],
+              "niche_topics": ["Automerge internals", "Diamond Types (Josephine Lemon)", "Eg-walker algorithm", "pure op-based CRDTs", "Yjs document architecture"],
+              "references": {
+                "easy": ["'An Introduction to CRDTs' — Lars Hupel blog"],
+                "mid": ["A comprehensive study of CRDTs — Shapiro et al. (2011)", "Automerge docs + source"],
+                "deep": ["Pure Op-Based CRDTs — Baquero et al. (2017)", "Making CRDTs Byzantine Fault Tolerant — Kleppmann (2022)"],
+                "niche": ["Josephine Lemon's Diamond Types writeup", "Yjs internals blog — Kevin Jahns", "Ink & Switch CRDT research"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "os_internals",
+          "name": "Operating Systems Internals",
+          "topics": [
+            {
+              "id": "scheduling",
+              "name": "CPU Scheduling",
+              "subtopics": ["CFS completely fair scheduler", "real-time scheduling SCHED_FIFO", "NUMA-aware scheduling", "cgroup v2 CPU", "tickless kernel"],
+              "niche_topics": ["ghost scheduling framework (Google)", "Shenango server scheduler", "Shinjuku preemptive kernel", "Linux BPF scheduler (sched_ext)", "Caladan kernel bypass"],
+              "references": {
+                "easy": ["'Operating Systems: Three Easy Pieces' — Arpaci-Dusseau (free online)"],
+                "mid": ["MIT 6.1810 xv6 scheduling lab", "Linux Kernel Development — Robert Love (ch.4)"],
+                "deep": ["CFS scheduler source (kernel/sched/fair.c)", "Ghosts in the Machine — Google Research (2023)"],
+                "niche": ["sched_ext BPF scheduler RFC thread (LKML)", "Shenango paper (NSDI '19)", "Shinjuku paper (NSDI '19)"]
+              }
+            },
+            {
+              "id": "memory_management",
+              "name": "Virtual Memory & Memory Management",
+              "subtopics": ["paging + TLB shootdowns", "huge pages / THP", "NUMA memory policies", "OOM killer", "memory-mapped files"],
+              "niche_topics": ["Zswap / ZRAM internals", "userfaultfd for live migration", "DAMON memory access monitor", "page cache writeback throttling", "HMM heterogeneous memory management"],
+              "references": {
+                "easy": ["'Computer Systems: A Programmer's Perspective' (CS:APP) ch.9"],
+                "mid": ["Linux Kernel Development — Robert Love (ch.15)", "What Every Programmer Should Know About Memory — Drepper (2007)"],
+                "deep": ["'Computer Architecture: A Quantitative Approach' — Hennessy & Patterson"],
+                "niche": ["DAMON RFC series (LKML)", "Azul Systems C4 GC paper", "HotOS '21 memory disaggregation papers"]
+              }
+            },
+            {
+              "id": "io_subsystem",
+              "name": "I/O Subsystem & io_uring",
+              "subtopics": ["epoll vs io_uring", "async I/O models", "block layer internals", "NVMe queue depth", "zero-copy networking"],
+              "niche_topics": ["io_uring fixed buffers + registered files", "SPDK storage performance dev kit", "io_uring multishot accept", "XDP express data path", "DPDK kernel bypass"],
+              "references": {
+                "easy": ["Lord of the io_uring — Shuveb Hussain (free book online)"],
+                "mid": ["Efficient IO with io_uring — Jens Axboe (2019 whitepaper)", "SPDK docs"],
+                "deep": ["io_uring source + liburing", "XDP paper — Høiland-Jørgensen et al. (2018)"],
+                "niche": ["Jens Axboe's blog on io_uring features", "DPDK summit talks", "Cloudflare XDP DDoS mitigation writeup"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "compilers_runtimes",
+          "name": "Compilers & Language Runtimes",
+          "topics": [
+            {
+              "id": "compiler_internals",
+              "name": "Compiler Internals",
+              "subtopics": ["SSA form", "register allocation", "loop optimizations", "escape analysis", "CFG construction"],
+              "niche_topics": ["MLIR multi-level IR", "Cranelift codegen (wasmtime)", "Sea of Nodes IR (V8/HotSpot)", "E-graphs equality saturation", "Superoptimization with STOKE"],
+              "references": {
+                "easy": ["'Writing a C Compiler' — Nora Sandler (No Starch Press, 2024)"],
+                "mid": ["Stanford CS143 lecture notes", "'Engineering a Compiler' — Cooper & Torczon"],
+                "deep": ["'Advanced Compiler Design and Implementation' — Muchnick", "LLVM Language Reference + LLVM Internals blog series"],
+                "niche": ["MLIR paper (CGO '21)", "E-graphs Good paper — Willsey et al.", "Cranelift design docs (bytecodealliance)"]
+              }
+            },
+            {
+              "id": "gc_internals",
+              "name": "Garbage Collection Internals",
+              "subtopics": ["tracing GC vs reference counting", "generational GC", "write barriers", "tri-color marking", "concurrent GC pauses"],
+              "niche_topics": ["Azul C4 / Zing pauseless GC", "ZGC coloured pointers", "Shenandoah GC barriers", "Go's GC pacing algorithm", "LXR reference counting hybrid"],
+              "references": {
+                "easy": ["'The Garbage Collection Handbook' intro chapters — Jones, Hosking, Moss"],
+                "mid": ["Go GC design doc (golang.org)", "JVM ZGC internals — Per Liden"],
+                "deep": ["'The Garbage Collection Handbook' — Jones, Hosking, Moss (full)"],
+                "niche": ["Azul C4 paper (ISMM '10)", "LXR paper (PLDI '22)", "Go GC pacer redesign proposal (golang.org/issue/44167)"]
+              }
+            },
+            {
+              "id": "jit_compilation",
+              "name": "JIT Compilation",
+              "subtopics": ["tiered compilation", "tracing JIT vs method JIT", "deoptimization", "inline caches", "OSR on-stack replacement"],
+              "niche_topics": ["V8 Turbofan Sea of Nodes", "LuaJIT's NaN-boxing + trace JIT", "RPython meta-tracing", "GraalVM partial evaluation", "Copy-and-patch JIT (CPython 3.13)"],
+              "references": {
+                "easy": ["'Virtual Machines' — Smith & Nair"],
+                "mid": ["V8 blog series on Turbofan", "LuaJIT 2.0 design doc — Mike Pall"],
+                "deep": ["Trace-based Just-in-Time Compiler for the Java HotSpot VM", "Self paper — Chambers & Ungar (OOPSLA '89)"],
+                "niche": ["Copy-and-patch JIT CPython 3.13 internals", "GraalVM partial eval paper", "LuaJIT list archives (Mike Pall's explanations)"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "networking_internals",
+          "name": "Networking Internals",
+          "topics": [
+            {
+              "id": "tcp_ip_stack",
+              "name": "TCP/IP Stack Internals",
+              "subtopics": ["TCP state machine", "congestion control (CUBIC, BBR)", "socket buffer tuning", "TIME_WAIT storm", "zero-copy sendfile"],
+              "niche_topics": ["BBRv3 algorithm", "QUIC loss recovery", "TCP fast open pitfalls", "multipath TCP (MPTCP)", "kernel TLS offload"],
+              "references": {
+                "easy": ["'Computer Networking: A Top-Down Approach' — Kurose & Ross"],
+                "mid": ["Stanford CS144 TCP implementation lab", "'TCP/IP Illustrated Vol.1' — W. Richard Stevens"],
+                "deep": ["Linux TCP source (net/ipv4/tcp*.c)", "BBR paper — Cardwell et al. (Google, 2016)"],
+                "niche": ["Cloudflare blog on TCP internals", "MPTCP RFC 8684", "Julia Evans' networking zines"]
+              }
+            },
+            {
+              "id": "ebpf",
+              "name": "eBPF — Extended Berkeley Packet Filter",
+              "subtopics": ["BPF bytecode + verifier", "kprobes / uprobes / tracepoints", "BPF maps", "tc-bpf", "BPF CO-RE"],
+              "niche_topics": ["BPF type format (BTF)", "bpfilter replacing iptables", "BPF LSM security", "XDP hardware offload", "BPF iterators"],
+              "references": {
+                "easy": ["'BPF Performance Tools' — Brendan Gregg (ch.1-3)"],
+                "mid": ["'BPF Performance Tools' — Brendan Gregg (full)", "Cilium eBPF docs"],
+                "deep": ["eBPF verifier source (kernel/bpf/verifier.c)", "BPF and XDP Reference Guide — Cilium"],
+                "niche": ["Brendan Gregg's eBPF blog", "LWN.net eBPF series", "BPF Summit talks (YouTube)"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "observability",
+          "name": "Observability Engineering",
+          "topics": [
+            {
+              "id": "distributed_tracing",
+              "name": "Distributed Tracing Internals",
+              "subtopics": ["Dapper-style trace context propagation", "sampling strategies", "head-based vs tail-based sampling", "span attributes + events", "trace-metric correlation"],
+              "niche_topics": ["Honeycomb's BubbleUp for high-cardinality", "OpenTelemetry Collector pipeline", "Adaptive sampling (Jaeger)", "Continuous profiling with Pyroscope + traces", "eBPF auto-instrumentation (Beyla)"],
+              "references": {
+                "easy": ["'Observability Engineering' — Charity Majors, Liz Fong-Jones, George Miranda"],
+                "mid": ["OpenTelemetry docs + specification", "Dapper paper — Sigelman et al. (Google, 2010)"],
+                "deep": ["Honeycomb blog archive (Charity Majors)", "OpenTelemetry Collector contrib source"],
+                "niche": ["Beyla eBPF auto-instrumentation docs", "Pyroscope continuous profiling blog", "Grafana Tempo internals"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "security_engineering",
+          "name": "Security Engineering",
+          "topics": [
+            {
+              "id": "cryptography_primitives",
+              "name": "Cryptography Primitives",
+              "subtopics": ["AES-GCM internals", "Curve25519 / X25519", "HMAC construction", "hash functions (SHA-3, BLAKE3)", "key derivation (HKDF, Argon2)"],
+              "niche_topics": ["BLAKE3 Bao verified streaming", "Signal double ratchet protocol", "Noise protocol framework", "OPAQUE PAKE", "post-quantum CRYSTALS-Kyber"],
+              "references": {
+                "easy": ["'Serious Cryptography' — Jean-Philippe Aumasson"],
+                "mid": ["'The Joy of Cryptography' (free PDF) — Mike Rosulek", "Dan Boneh's Cryptography I (Coursera)"],
+                "deep": ["'Introduction to Modern Cryptography' — Katz & Lindell"],
+                "niche": ["Noise Protocol specification", "OPAQUE paper (EUROCRYPT '18)", "NIST PQC finalists documentation"]
+              }
+            },
+            {
+              "id": "supply_chain_security",
+              "name": "Software Supply Chain Security",
+              "subtopics": ["SBOM generation", "SLSA provenance levels", "Sigstore / cosign", "in-toto attestations", "dependency confusion attacks"],
+              "niche_topics": ["Rekor transparency log internals", "Gitsign commit signing", "SLSA provenance in GitHub Actions", "typosquatting detection tooling", "Backstabber's Knife Collection dataset"],
+              "references": {
+                "easy": ["SLSA framework docs (slsa.dev)"],
+                "mid": ["Sigstore docs + Rekor architecture", "'Hacking the Supply Chain' — Ax Sharma (Sonatype blog)"],
+                "deep": ["in-toto specification", "SLSA paper — Kim et al. (2021)"],
+                "niche": ["Backstabber's Knife Collection — Ohm et al.", "Chainguard blog on supply chain", "Trail of Bits supply chain audit reports"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ml_systems",
+          "name": "ML Systems & Infrastructure",
+          "topics": [
+            {
+              "id": "training_infrastructure",
+              "name": "Large-Scale Training Infrastructure",
+              "subtopics": ["data parallelism vs model parallelism", "pipeline parallelism", "gradient checkpointing", "mixed precision training", "distributed optimizer (ZeRO)"],
+              "niche_topics": ["Megatron-LM tensor parallelism", "FlashAttention I/II algorithm", "PagedAttention (vLLM)", "Sequence parallelism (Ulysses)", "MegaScale Facebook training infra"],
+              "references": {
+                "easy": ["Andrej Karpathy's micrograd + nanoGPT walkthroughs"],
+                "mid": ["CMU 10-414 Deep Learning Systems course", "Scaling Laws for Neural Language Models — Kaplan et al."],
+                "deep": ["Megatron-LM paper", "FlashAttention paper — Dao et al.", "ZeRO paper — Rajbhandari et al."],
+                "niche": ["MegaScale paper (Meta, 2024)", "vLLM PagedAttention blog + paper", "PyTorch FSDP2 internals docs"]
+              }
+            },
+            {
+              "id": "inference_serving",
+              "name": "LLM Inference Serving",
+              "subtopics": ["KV cache management", "continuous batching", "speculative decoding", "tensor parallelism at inference", "quantization (GPTQ, AWQ, GGUF)"],
+              "niche_topics": ["Splitwise disaggregated prefill/decode", "Mooncake KV cache storage", "RadixAttention (SGLang)", "Medusa multi-draft speculation", "TritonServer vs vLLM architecture"],
+              "references": {
+                "easy": ["Hugging Face generation blog series"],
+                "mid": ["vLLM blog + paper", "TensorRT-LLM docs"],
+                "deep": ["Orca: A Distributed Serving System (OSDI '22)", "Splitwise paper (ISCA '24)"],
+                "niche": ["SGLang RadixAttention paper", "Mooncake KV cache paper", "lm-sys Chatbot Arena engineering blog"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "wasm_and_runtimes",
+          "name": "WebAssembly & Runtimes",
+          "topics": [
+            {
+              "id": "wasm_internals",
+              "name": "WebAssembly Internals",
+              "subtopics": ["linear memory model", "table + indirect calls", "validation + binary format", "Wasm component model", "WASI system interface"],
+              "niche_topics": ["Wasm GC proposal (reference types)", "WasmGC + Kotlin/Dart", "Wasm threads + atomics", "Wasm tail calls", "WasmEdge for edge AI"],
+              "references": {
+                "easy": ["'Programming WebAssembly with Rust' — Kevin Hoffman"],
+                "mid": ["WebAssembly specification (webassembly.github.io)", "Bytecode Alliance blog"],
+                "deep": ["Bringing the Web Up to Speed with WebAssembly — Haas et al. (PLDI '17)"],
+                "niche": ["Wasm GC proposal explainer", "WasmEdge WASI-NN docs", "Fermyon Spin blog on component model"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "formal_methods",
+          "name": "Formal Verification & Program Analysis",
+          "topics": [
+            {
+              "id": "tla_plus",
+              "name": "TLA+ & Model Checking",
+              "subtopics": ["temporal logic operators", "safety vs liveness properties", "TLC model checker", "PlusCal algorithm language", "refinement mappings"],
+              "niche_topics": ["AWS use of TLA+ (Cook 2014)", "Elasticsearch Raft verified in TLA+", "Apalache symbolic model checker", "Quint (TLA+ successor at Informal Systems)", "P language for distributed protocols"],
+              "references": {
+                "easy": ["'Learn TLA+' — Hillel Wayne (learntla.com, free)"],
+                "mid": ["'Practical TLA+' — Hillel Wayne (Apress)", "Amazon TLA+ use paper — Cook (2014)"],
+                "deep": ["'Specifying Systems' — Leslie Lamport (free PDF)"],
+                "niche": ["Apalache symbolic checker paper", "Quint language docs (Informal Systems)", "AWS re:Invent talks on formal methods"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "science",
+      "name": "Science",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "physics",
+          "name": "Physics",
+          "topics": [
+            {
+              "id": "quantum_mechanics",
+              "name": "Quantum Mechanics",
+              "subtopics": ["superposition", "wave-particle duality", "entanglement", "decoherence", "measurement problem"],
+              "niche_topics": ["quantum Darwinism", "retrocausality experiments", "ER=EPR conjecture (Maldacena & Susskind)", "Wigner's friend paradox", "weak measurement + post-selection"],
+              "references": {
+                "easy": ["'Something Deeply Hidden' — Sean Carroll"],
+                "mid": ["'The Fabric of Reality' — David Deutsch", "Feynman Lectures Vol.3 (free online)"],
+                "deep": ["'The Principles of Quantum Mechanics' — Dirac", "'Quantum Mechanics and Path Integrals' — Feynman & Hibbs"],
+                "niche": ["Scott Aaronson's Shtetl-Optimized blog", "arXiv:quant-ph daily feed", "Sean Carroll's Mindscape podcast (QM episodes)"]
+              }
+            },
+            {
+              "id": "thermodynamics",
+              "name": "Thermodynamics & Statistical Mechanics",
+              "subtopics": ["entropy and the second law", "Boltzmann distribution", "phase transitions", "free energy", "Maxwell's demon"],
+              "niche_topics": ["Landauer's principle (information erasure cost)", "fluctuation theorems (Jarzynski equality)", "stochastic thermodynamics", "black hole thermodynamics + Bekenstein bound", "negative temperatures in spin systems"],
+              "references": {
+                "easy": ["'The Second Law: Energy, Chaos and Form' — P.W. Atkins"],
+                "mid": ["'Thermal Physics' — Kittel & Kroemer"],
+                "deep": ["'Statistical Mechanics' — Pathria & Beale"],
+                "niche": ["Jarzynski equality original paper (1997)", "Landauer's principle experimental test (2012, Nature)", "Rovelli's thermal time hypothesis"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "chemistry_everyday",
+          "name": "Chemistry in Everyday Life",
+          "topics": [
+            {
+              "id": "food_chemistry",
+              "name": "Food Chemistry",
+              "subtopics": ["Maillard reaction", "emulsification", "fermentation biochemistry", "food preservation chemistry", "flavor molecules"],
+              "niche_topics": ["transglutaminase 'meat glue'", "spherification sodium alginate", "Modernist Cuisine techniques", "sourdough microbial ecology", "capsaicin receptor binding"],
+              "references": {
+                "easy": ["'On Food and Cooking' — Harold McGee"],
+                "mid": ["'The Kitchen as Laboratory' — Vega & Ubbink", "'Modernist Cuisine' summary volumes"],
+                "deep": ["'Modernist Cuisine: The Art and Science of Cooking' — Myhrvold et al. (6 vol.)"],
+                "niche": ["Khymos blog — Martin Lersch", "Cooking Issues podcast (Dave Arnold)", "Food & Function journal (RSC)"]
+              }
+            },
+            {
+              "id": "materials_chemistry",
+              "name": "Materials & Everyday Chemistry",
+              "subtopics": ["polymers and plastics", "corrosion mechanisms", "adhesives chemistry", "photochromic materials", "aerogels"],
+              "niche_topics": ["self-healing polymers", "liquid metal gallium alloys", "graphene in real applications", "MAX phases ceramics", "metal-organic frameworks (MOFs)"],
+              "references": {
+                "easy": ["'The Disappearing Spoon' — Sam Kean"],
+                "mid": ["'Chemistry: The Impure Science' — Bensaude-Vincent & Simon"],
+                "deep": ["'Introduction to Materials Science for Engineers' — Shackelford"],
+                "niche": ["C&EN (Chemical & Engineering News) deep feature archive", "Nature Materials research highlights"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "mathematics",
+      "name": "Mathematics",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "pure_math",
+          "name": "Pure Mathematics",
+          "topics": [
+            {
+              "id": "number_theory",
+              "name": "Number Theory",
+              "subtopics": ["prime distribution", "modular arithmetic", "Diophantine equations", "quadratic reciprocity", "algebraic integers"],
+              "niche_topics": ["ABC conjecture and Mochizuki's IUT theory", "Langlands program overview", "gaps between primes (Zhang, Maynard)", "p-adic numbers", "L-functions and the Riemann Hypothesis"],
+              "references": {
+                "easy": ["'The Music of the Primes' — Marcus du Sautoy"],
+                "mid": ["'An Introduction to the Theory of Numbers' — Hardy & Wright", "'Number Theory: A Very Short Introduction' — Robin Wilson"],
+                "deep": ["'Algebraic Number Theory' — Neukirch"],
+                "niche": ["Peter Scholze's Quanta Magazine interviews on perfectoid spaces", "Terry Tao's blog (What's New)", "arXiv:math.NT"]
+              }
+            },
+            {
+              "id": "topology",
+              "name": "Topology",
+              "subtopics": ["open/closed sets", "continuity", "compactness", "homotopy", "fundamental group"],
+              "niche_topics": ["topological data analysis (TDA)", "persistent homology", "knot theory + quantum invariants", "exotic R^4 and Donaldson theory", "infinity-categories"],
+              "references": {
+                "easy": ["'Topology Without Tears' — Sidney Morris (free PDF)"],
+                "mid": ["'Topology' — Munkres", "3Blue1Brown topology series (YouTube)"],
+                "deep": ["'Algebraic Topology' — Hatcher (free PDF)"],
+                "niche": ["Applied Topology blog — Henry Adams", "arXiv:math.AT", "nLab for infinity-categories"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "applied_math",
+          "name": "Applied Mathematics",
+          "topics": [
+            {
+              "id": "information_theory",
+              "name": "Information Theory",
+              "subtopics": ["Shannon entropy", "mutual information", "channel capacity", "source coding theorem", "Kolmogorov complexity"],
+              "niche_topics": ["algorithmic information theory", "information-theoretic security", "quantum information theory", "network coding", "single-shot information theory"],
+              "references": {
+                "easy": ["'The Information: A History, A Theory, A Flood' — James Gleick"],
+                "mid": ["'Elements of Information Theory' — Cover & Thomas (ch.1-5)"],
+                "deep": ["'Elements of Information Theory' — Cover & Thomas (full)", "Shannon's original 1948 paper"],
+                "niche": ["Tishby's information bottleneck theory papers", "Bernhard Schölkopf blog on causal inference + info theory", "Kolmogorov complexity survey — Li & Vitányi"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "aerospace",
+      "name": "Aerospace",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "aeronautics",
+          "name": "Aeronautics",
+          "topics": [
+            {
+              "id": "stealth_technology",
+              "name": "Stealth Technology",
+              "subtopics": ["radar cross section reduction", "RAM (radar absorbent material)", "aircraft shaping geometry", "IR signature reduction", "low observable design trade-offs"],
+              "niche_topics": ["Hopeless Diamond geometry origin", "F-117 edge diffraction design", "B-2 plasma stealth rumors vs reality", "SR-71 OXCART program", "Have Blue prototype program"],
+              "references": {
+                "easy": ["'Skunk Works' — Ben Rich & Leo Janos"],
+                "mid": ["'Stealth: The Secret Contest to Invent Invisible Aircraft' — Peter Westwick"],
+                "deep": ["'Radar Cross Section' — Knott, Shaeffer & Tuley"],
+                "niche": ["CIA declassified OXCART files (FOIA releases)", "Code One magazine archive (Lockheed Martin)", "Defense Advanced Research Projects Agency history series"]
+              }
+            },
+            {
+              "id": "propulsion_systems",
+              "name": "Propulsion Systems",
+              "subtopics": ["turbofan thermodynamic cycle", "afterburner mechanics", "turbine cooling", "specific impulse", "ramjet vs scramjet"],
+              "niche_topics": ["detonation wave engines (PDEs)", "rotating detonation engines (RDE)", "variable cycle engines (F120)", "SABRE hybrid engine (Reaction Engines)", "nuclear thermal propulsion (NTP) revival"],
+              "references": {
+                "easy": ["'Jet Age' — Sam Howe Verhovek"],
+                "mid": ["'Gas Turbine Theory' — Saravanamuttoo et al."],
+                "deep": ["AIAA Journal papers on detonation engines"],
+                "niche": ["Reaction Engines blog on SABRE", "NASASpaceFlight forum propulsion threads", "David Monniaux's turbine cooling blog"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "space_access",
+          "name": "Space Access & Launch Vehicles",
+          "topics": [
+            {
+              "id": "reusability",
+              "name": "Rocket Reusability",
+              "subtopics": ["propulsive landing guidance", "grid fin aerodynamics", "heat shield tiles vs TUFROC", "reuse refurbishment economics", "stage separation mechanisms"],
+              "niche_topics": ["Falcon 9 Merlin engine restart cold case", "Starship full-flow staged combustion", "Electron Rutherford 3D-printed engine", "New Shepard escape motor reuse", "Chinese reusable launch attempts (Zhuque-3)"],
+              "references": {
+                "easy": ["'Liftoff' — Eric Berger"],
+                "mid": ["'Rocket Propulsion Elements' — Sutton & Biblarz (ch. on reusability economics)"],
+                "deep": ["SpaceX Falcon 9 landing GNC papers (AIAA)"],
+                "niche": ["NSF (NASASpaceFlight) forums launch analysis threads", "Everyday Astronaut deep dives (YouTube)", "Casey Handmer's blog on Starship economics"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "space_science",
+      "name": "Space Science",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "cosmology",
+          "name": "Cosmology",
+          "topics": [
+            {
+              "id": "dark_matter",
+              "name": "Dark Matter",
+              "subtopics": ["galactic rotation curves", "gravitational lensing evidence", "WIMP hypothesis", "axion dark matter", "CDM vs WDM models"],
+              "niche_topics": ["MOND vs dark matter debate", "primordial black holes as dark matter", "dark matter in Milky Way subhalos", "SIMPs (strongly interacting massive particles)", "dark photon searches"],
+              "references": {
+                "easy": ["'The Milky Way: An Insider's Guide' — William Waller"],
+                "mid": ["'Particle Dark Matter: Observations, Models and Searches' — Bertone", "Vera Rubin's original rotation curve papers"],
+                "deep": ["Annual Review of Astronomy and Astrophysics dark matter review"],
+                "niche": ["Stacy McGaugh's Triton Station blog (MOND advocate)", "Kathryn Zurek's axion dark matter lecture series", "Xenon1T/LZ experiment result papers"]
+              }
+            },
+            {
+              "id": "gravitational_waves",
+              "name": "Gravitational Waves",
+              "subtopics": ["LIGO interferometer design", "binary black hole mergers", "neutron star mergers + kilonovae", "waveform templates", "Einstein@Home"],
+              "niche_topics": ["pulsar timing arrays (NANOGrav background)", "LISA space interferometer design", "continuous GW from spinning neutron stars", "post-Newtonian approximations", "GW memory effect"],
+              "references": {
+                "easy": ["'Ripples in Spacetime' — Govert Schilling"],
+                "mid": ["LIGO Scientific Collaboration detection papers (PRL 2016)"],
+                "deep": ["'Gravitational Waves: Theory and Experiments' — Maggiore"],
+                "niche": ["NANOGrav 15-year data set paper (2023)", "LISA Pathfinder technical reports", "Nils Andersson's GW review (arXiv)"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "biology",
+      "name": "Biology",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "molecular_biology",
+          "name": "Molecular Biology",
+          "topics": [
+            {
+              "id": "crispr",
+              "name": "CRISPR & Gene Editing",
+              "subtopics": ["Cas9 mechanism", "guide RNA design", "off-target effects", "base editing", "prime editing"],
+              "niche_topics": ["CasΦ ultra-compact Cas", "anti-CRISPR proteins", "CRISPR epigenome editing", "in vivo somatic editing (Intellia)", "PAM-less Cas variants"],
+              "references": {
+                "easy": ["'A Crack in Creation' — Jennifer Doudna"],
+                "mid": ["'The Code Breaker' — Walter Isaacson"],
+                "deep": ["Doudna & Charpentier 2012 Science paper", "David Liu's base editing papers (Nature 2016)"],
+                "niche": ["Addgene CRISPR guide", "Broad Institute CRISPR blog", "bioRxiv preprints on prime editing efficiency"]
+              }
+            },
+            {
+              "id": "epigenetics",
+              "name": "Epigenetics",
+              "subtopics": ["DNA methylation", "histone modification", "chromatin remodeling", "imprinting", "transgenerational epigenetics"],
+              "niche_topics": ["epigenetic clocks (Horvath clock)", "epigenetic inheritance controversy", "liquid biopsy methylation cancer detection", "C. elegans RNAi inheritance", "epitranscriptomics (m6A RNA modification)"],
+              "references": {
+                "easy": ["'The Epigenetics Revolution' — Nessa Carey"],
+                "mid": ["'Epigenetics' — David Allis et al."],
+                "deep": ["Cell journal epigenetics review papers", "Horvath 2013 epigenetic clock paper (Genome Biology)"],
+                "niche": ["Moshe Szyf blog on epigenetic inheritance", "encode project data portal", "Steve Horvath's Aging.AI project"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "marine_life",
+      "name": "Marine Life",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "deep_sea",
+          "name": "Deep Sea Biology",
+          "topics": [
+            {
+              "id": "bioluminescence",
+              "name": "Bioluminescence",
+              "subtopics": ["luciferin-luciferase reaction", "deep sea light organs", "dinoflagellate flash patterns", "counterillumination camouflage", "bacterial light production"],
+              "niche_topics": ["firefly squid (Watasenia scintillans) visual system", "Aequorea victoria GFP discovery (Shimomura)", "deep sea bioluminescence census", "viperfish photophores", "Vampyroteuthis infernalis blue glow"],
+              "references": {
+                "easy": ["'The Deep: The Extraordinary Creatures of the Abyss' — Claire Nouvian"],
+                "mid": ["'Bioluminescence: A Scientific Perspective' — Hastings & Morin"],
+                "deep": ["Journal of Experimental Biology bioluminescence papers"],
+                "niche": ["Edith Widder's TEDx + her book 'Below the Edge of Darkness'", "MBARI deep sea video archives", "Osamu Shimomura Nobel lecture"]
+              }
+            },
+            {
+              "id": "hydrothermal_vents",
+              "name": "Hydrothermal Vents",
+              "subtopics": ["chemosynthesis vs photosynthesis", "vent fauna ecology", "extremophiles", "black smokers vs white smokers", "vent fluid chemistry"],
+              "niche_topics": ["Lost City alkaline vent field (origin of life hypotheses)", "snottite sulfuric acid biofilm", "Pompeii worm heat tolerance record", "vent tubeworm hemoglobin chemistry", "Rimicaris exoculata eyeless shrimp light organ"],
+              "references": {
+                "easy": ["'The Octopus Scientists' — Sy Montgomery"],
+                "mid": ["'Life as We Do Not Know It' — Peter Ward"],
+                "deep": ["Annual Review of Marine Science vent ecology papers"],
+                "niche": ["NOAA Ocean Exploration vent cruise reports", "Nick Lane's 'The Vital Question' (alkaline vent + life origin)", "Deep Sea Research journal"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cephalopods",
+          "name": "Cephalopods",
+          "topics": [
+            {
+              "id": "octopus_cognition",
+              "name": "Octopus Cognition & Neuroscience",
+              "subtopics": ["distributed nervous system", "skin chromatophores", "tool use", "maze learning", "RNA editing in coleoids"],
+              "niche_topics": ["octopus mRNA editing at extreme rates (Rosenthal lab)", "cuttlefish sleep with active dreaming evidence", "octopus arm autonomy + local reflexes", "octopus epigenome sequencing", "skin photoreceptors (seeing without eyes)"],
+              "references": {
+                "easy": ["'Other Minds' — Peter Godfrey-Smith"],
+                "mid": ["'Sy Montgomery The Soul of an Octopus'", "'Are We Smart Enough to Know How Smart Animals Are?' — Frans de Waal"],
+                "deep": ["Current Biology coleoid cognition papers", "Rosenthal lab RNA editing papers (Cell 2017)"],
+                "niche": ["Godfrey-Smith's Diver videos (YouTube)", "MBL (Marine Biological Laboratory) cephalopod symposium talks", "Gül Dölen octopus MDMA paper (Current Biology 2023)"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "machines",
+      "name": "Machines & Engineering",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "mechanical_engineering",
+          "name": "Mechanical Engineering",
+          "topics": [
+            {
+              "id": "turbomachinery",
+              "name": "Turbomachinery",
+              "subtopics": ["axial vs centrifugal compressors", "blade aerodynamics", "surge and stall", "turbine cooling channels", "tip clearance"],
+              "niche_topics": ["contra-rotating open rotor (CROR) engines", "ceramic matrix composites in turbines", "additive manufactured turbine blades", "micro gas turbines for UAVs", "wave rotor topping cycles"],
+              "references": {
+                "easy": ["'The Jet Engine' — Rolls-Royce publication (free PDF)"],
+                "mid": ["'Gas Turbine Theory' — Saravanamuttoo, Rogers & Cohen"],
+                "deep": ["ASME Journal of Turbomachinery papers"],
+                "niche": ["Rolls-Royce technology blog", "GE Aviation engineering stories", "David Japikse turbomachinery lectures (YouTube)"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "robotics",
+          "name": "Robotics",
+          "topics": [
+            {
+              "id": "robot_locomotion",
+              "name": "Robot Locomotion",
+              "subtopics": ["inverted pendulum control", "ZMP stability criterion", "model predictive control (MPC)", "trajectory optimization", "whole-body control"],
+              "niche_topics": ["learning locomotion via RL (ETH RSL)", "compliant actuators (SEA)", "bipedal running (RABBIT/ATRIAS)", "RaiSim contact simulation", "differentiable simulation for robot learning"],
+              "references": {
+                "easy": ["'Raibert's Legged Robots That Balance' — MIT Press (original)"],
+                "mid": ["ETH Zurich ANYmal papers + code", "Marc Raibert's ICRA talks (YouTube)"],
+                "deep": ["'Underactuated Robotics' — Russ Tedrake (free online MIT OCW)"],
+                "niche": ["ETH RSL GitHub (reinforcement learning locomotion)", "Agility Robotics Cassie papers", "CMU Locomotion Group research blog"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "weapons",
+      "name": "Weapons & Military Technology",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "electronic_warfare",
+          "name": "Electronic Warfare",
+          "topics": [
+            {
+              "id": "jamming_systems",
+              "name": "Jamming & Electronic Attack",
+              "subtopics": ["spot vs barrage jamming", "DRFM (digital radio frequency memory)", "escort vs standoff jamming", "EA-18G Growler systems", "GPS jamming/spoofing"],
+              "niche_topics": ["cognitive EW with ML", "photonic radar (AESA replacement)", "Electromagnetic pulse (EMP) hardening", "quantum radar proposal feasibility", "CHAMP cruise missile directed energy"],
+              "references": {
+                "easy": ["'Ghost Fleet' — P.W. Singer & August Cole (techno-thriller with real EW)"],
+                "mid": ["'Electronic Warfare in the Information Age' — Adamy"],
+                "deep": ["'Introduction to Electronic Warfare Modeling and Simulation' — Adamy"],
+                "niche": ["JWICS-declassified EW doctrine summaries (public versions)", "Center for Strategic and Budgetary Assessments EW papers", "War on the Rocks EW analysis"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "precision_weapons",
+          "name": "Precision Guided Munitions",
+          "topics": [
+            {
+              "id": "guidance_systems",
+              "name": "Guidance Systems",
+              "subtopics": ["INS (inertial navigation)", "GPS-aided guidance", "terminal homing (IR/SAR)", "laser designation", "man-in-the-loop guidance"],
+              "niche_topics": ["terrain contour matching (TERCOM)", "autonomous terminal guidance with AI (Project Maven)", "hypervelocity kinetic penetrators physics", "JDAM upgrade kit engineering", "low-cost seeker technologies"],
+              "references": {
+                "easy": ["'The Bomber Mafia' — Malcolm Gladwell"],
+                "mid": ["'The Precision Revolution' — Barry Watts (CSBA monograph, free)"],
+                "deep": ["'Tactical Missile Design' — Fleeman"],
+                "niche": ["CSBA reports on precision warfare", "War on the Rocks missile analysis", "Jeffrey Lewis (Arms Control Wonk) blog"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "architecture",
+      "name": "Architecture",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "architectural_history",
+          "name": "Architectural History",
+          "topics": [
+            {
+              "id": "brutalism",
+              "name": "Brutalism",
+              "subtopics": ["béton brut origins", "social housing utopias", "Paul Rudolph + Alison/Peter Smithson", "Soviet brutalism", "brutalism's fall and revival"],
+              "niche_topics": ["Trellick Tower tenant activism", "Robin Hood Gardens demolition controversy", "Brutalism in the Global South", "Balkanism and 'social condenser' concept", "New Brutalism vs Brutalism distinction (Banham)"],
+              "references": {
+                "easy": ["'Brutalist London Map' — Darren Bradley"],
+                "mid": ["'The New Brutalism' — Reyner Banham (1966)", "'Brutalism: Post-War British Architecture' — Elain Harwood"],
+                "deep": ["'Space, Hope and Brutalism' — Elain Harwood", "'Architecture of Brutalism' — Alexander Clement"],
+                "niche": ["Brutal London website — Simon Phipps", "Dezeen's brutalism archive", "Archdaily Soviet modernism series"]
+              }
+            },
+            {
+              "id": "vernacular_architecture",
+              "name": "Vernacular Architecture",
+              "subtopics": ["climate-responsive design", "earth building (rammed earth/adobe)", "passive cooling techniques", "local material systems", "indigenous building knowledge"],
+              "niche_topics": ["Nubian vaulted construction technique", "wind towers of Yazd (Iran)", "Dogon cliff villages (Mali)", "Fallingwater structural issues", "Hassan Fathy's new gourna village experiment"],
+              "references": {
+                "easy": ["'Architecture Without Architects' — Bernard Rudofsky"],
+                "mid": ["'Built to Meet Needs: Cultural Issues in Vernacular Architecture' — Paul Oliver"],
+                "deep": ["'Encyclopedia of Vernacular Architecture of the World' — Oliver (3 vol.)"],
+                "niche": ["Vernacular Architecture Forum publications", "Aga Khan Award for Architecture case studies", "EARTHEN ARCHITECTURE INITIATIVE (UNESCO)"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "structural_engineering",
+          "name": "Structural Engineering Wonders",
+          "topics": [
+            {
+              "id": "long_span_structures",
+              "name": "Long-Span Structures",
+              "subtopics": ["cable-stayed vs suspension bridges", "tensegrity structures", "gridshells", "form-finding methods", "thermal expansion joints"],
+              "niche_topics": ["Frei Otto soap film experiments for form-finding", "Buckminster Fuller geodesic dome patents", "Tacoma Narrows bridge aeroelastic flutter", "Sagrada Família catenary arches", "inverted catenary shells (Gaudi)"],
+              "references": {
+                "easy": ["'Why Buildings Fall Down' — Matthys Levy & Mario Salvadori"],
+                "mid": ["'The Art of Structural Engineering' — Bill Addis"],
+                "deep": ["'Structural Analysis' — Hibbeler"],
+                "niche": ["IL Stuttgart Institute publications (Frei Otto)", "Cecil Balmond's 'Informal' (Prestel)", "Computational Form Finding papers (IASS conference)"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "world_politics",
+      "name": "World Politics & Geopolitics",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "geopolitics",
+          "name": "Geopolitics",
+          "topics": [
+            {
+              "id": "great_power_competition",
+              "name": "Great Power Competition",
+              "subtopics": ["US-China rivalry", "Thucydides Trap", "technology competition", "Indo-Pacific dynamics", "NATO expansion"],
+              "niche_topics": ["Gray zone warfare tactics", "debt trap diplomacy debate (Belt & Road)", "semiconductor supply chain as geopolitical weapon", "space as the new contested domain", "AUKUS and submarine tech transfer politics"],
+              "references": {
+                "easy": ["'The World: A Brief Introduction' — Richard Haass"],
+                "mid": ["'Destined for War' — Graham Allison", "'Has China Won?' — Kishore Mahbubani"],
+                "deep": ["'The Rise and Fall of the Great Powers' — Paul Kennedy", "Foreign Affairs journal archive"],
+                "niche": ["Lowy Institute Indo-Pacific analysis", "CSIS China Power Project", "Wang Jisi's writing (Peking University) on US-China"]
+              }
+            },
+            {
+              "id": "authoritarian_regimes",
+              "name": "Authoritarian Regimes & Surveillance States",
+              "subtopics": ["digital authoritarianism", "social credit systems", "repression technology", "controlled information ecosystems", "kleptocracy mechanics"],
+              "niche_topics": ["Xinjiang surveillance architecture (Darren Byler)", "Russia's Runet sovereign internet", "Iran's NATCOM national intranet", "Transnational repression (Freedom House research)", "UAE's Pegasus spyware use"],
+              "references": {
+                "easy": ["'The People's Republic of Amnesia' — Louisa Lim"],
+                "mid": ["'How Democracies Die' — Levitsky & Ziblatt", "'Terror and Democracy in the Age of Stalin' — Wendy Goldman"],
+                "deep": ["'The Origins of Totalitarianism' — Hannah Arendt"],
+                "niche": ["Darren Byler's blog on Xinjiang", "Citizen Lab reports on Pegasus", "Freedom House 'Freedom on the Net' annual report"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "history",
+      "name": "History",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "forgotten_empires",
+          "name": "Forgotten & Underrepresented Empires",
+          "topics": [
+            {
+              "id": "mali_empire",
+              "name": "Mali Empire",
+              "subtopics": ["Mansa Musa wealth and pilgrimage", "Timbuktu as intellectual center", "trans-Saharan trade networks", "oral griots tradition", "fall to Songhai"],
+              "niche_topics": ["Timbuktu manuscript digitization project", "Mansa Musa's gold inflation of Cairo", "Sundiata Keita's oral epic", "salt-for-gold economies", "ibn Battuta's account of Mali"],
+              "references": {
+                "easy": ["'Mansa Musa and the Empire of Mali' — P. James Oliver"],
+                "mid": ["'The Fate of Africa' — Martin Meredith (Mali chapters)", "'African Empires: A Reader in Later African History' — Wickins"],
+                "deep": ["'Empire of Mali' — Nehemia Levtzion (academic)"],
+                "niche": ["SAVAMA manuscript library digitization blog", "Ancient Ghana/Mali on JSTOR", "Dietrich Rauchenberger's ibn Battuta analysis"]
+              }
+            },
+            {
+              "id": "ottoman_empire",
+              "name": "Ottoman Empire",
+              "subtopics": ["devshirme system", "millet religious autonomy", "Janissary corps", "Suleiman the Magnificent", "Tanzimat reforms"],
+              "niche_topics": ["Ottoman archives recently digitized (BOA)", "harem politics and valide sultan power", "Ottoman cartography + Piri Reis maps", "the coffee house as Ottoman public sphere", "çeşme infrastructure as soft power"],
+              "references": {
+                "easy": ["'Lords of the Horizons' — Jason Goodwin"],
+                "mid": ["'The Ottoman Empire 1700-1922' — Donald Quataert"],
+                "deep": ["'The Ottoman Empire and the World Around It' — Suraiya Faroqhi"],
+                "niche": ["Ottoman History Podcast", "BOA digital archive (Osmanlı Arşivi)", "Hakan Erdem's Janissary research"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cold_war",
+          "name": "Cold War",
+          "topics": [
+            {
+              "id": "intelligence_operations",
+              "name": "Intelligence Operations",
+              "subtopics": ["CIA covert action programs", "KGB active measures", "HUMINT vs SIGINT", "defector programs", "counterintelligence moles"],
+              "niche_topics": ["Operation PBSUCCESS (Guatemala 1954)", "VENONA signals decryption project", "GRU illegal residency networks", "Psychological warfare radio (Radio Free Europe)", "the Farewell Dossier (Soviet tech theft)"],
+              "references": {
+                "easy": ["'The Spy and the Traitor' — Ben Macintyre"],
+                "mid": ["'The Company: A History of the CIA' — Robert Baer", "'Legacy of Ashes' — Tim Weiner"],
+                "deep": ["'The Main Enemy' — Milton Bearden & James Risen"],
+                "niche": ["CREST CIA FOIA database (CIA.gov)", "Wilson Center Cold War International History Project", "Christopher Andrew's 'The Secret World' (comprehensive HUMINT history)"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "geography",
+      "name": "Geography",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "political_geography",
+          "name": "Political Geography",
+          "topics": [
+            {
+              "id": "border_disputes",
+              "name": "Border Disputes & Contested Territories",
+              "subtopics": ["maritime boundary law (UNCLOS)", "enclaves and exclaves", "de facto vs de jure states", "frozen conflicts", "demilitarized zones"],
+              "niche_topics": ["Cooch Behar enclave exchange (India/Bangladesh)", "Baarle-Hertog Belgian enclaves in Netherlands", "Bir Tawil unclaimed territory", "Sovereign Order of Malta's extraterritorial status", "Liberland disputed territory"],
+              "references": {
+                "easy": ["'How the World Map Looks Surprisingly Different' — Jay Foreman (YouTube series 'Map Men')"],
+                "mid": ["'The Atlas of Untamed Places' — Chris Fitch", "'Prisoners of Geography' — Tim Marshall"],
+                "deep": ["'The Geopolitics of Emotion' — Dominique Moïsi"],
+                "niche": ["Strange Maps blog — Frank Jacobs", "IBRU Durham border research centre publications", "Peter Saaler on Japanese territorial disputes"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "physical_geography",
+          "name": "Physical Geography",
+          "topics": [
+            {
+              "id": "ocean_currents",
+              "name": "Ocean Currents & Thermohaline Circulation",
+              "subtopics": ["AMOC Atlantic meridional overturning", "thermohaline conveyor belt", "El Niño/La Niña ENSO", "gyre systems", "upwelling zones"],
+              "niche_topics": ["AMOC tipping point research (Ditlevsen 2023)", "Agulhas current retroflection dynamics", "Stommel's 1961 box model", "deep water formation in Labrador Sea", "Pacific Decadal Oscillation as climate modulator"],
+              "references": {
+                "easy": ["'The Oceans: A Book of Questions and Answers' — Don Groves"],
+                "mid": ["'The Gulf Stream' — Stan Ulanski", "IPCC ocean chapter summaries"],
+                "deep": ["'Ocean Circulation' — Open University"],
+                "niche": ["Stefan Rahmstorf's blog on AMOC", "RAPID array data portal (UK NERC)", "Ditlevsen 2023 AMOC early warning paper (Nature Communications)"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "tech",
+      "name": "Technology & Society",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "tech_history",
+          "name": "Technology History",
+          "topics": [
+            {
+              "id": "internet_history",
+              "name": "Internet History",
+              "subtopics": ["ARPANET origins", "TCP/IP standardization", "web vs internet distinction", "dot-com boom/bust", "rise of mobile internet"],
+              "niche_topics": ["IMP (Interface Message Processor) hardware", "Jon Postel's quiet DNS hijack test", "the Eternal September (AOL + Usenet)", "Jakob Nielsen's early web usability research", "BeOS's lost opportunity against Windows"],
+              "references": {
+                "easy": ["'Where Wizards Stay Up Late' — Hafner & Lyon"],
+                "mid": ["'How the Internet Happened' — Brian McCullough", "Steven Levy's 'Hackers: Heroes of the Computer Revolution'"],
+                "deep": ["'Inventing the Internet' — Janet Abbate"],
+                "niche": ["RFC Editor archive (rfc-editor.org)", "Jason Scott's textfiles.com", "Catb.org/esr Eric Raymond essays"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ai_ethics",
+          "name": "AI Ethics & Alignment",
+          "topics": [
+            {
+              "id": "alignment_problem",
+              "name": "AI Alignment",
+              "subtopics": ["value alignment problem", "reward hacking", "scalable oversight", "interpretability methods", "RLHF mechanics"],
+              "niche_topics": ["Eliezer Yudkowsky's MIRI agenda vs Paul Christiano's approach", "Constitutional AI (Anthropic)", "activation steering experiments", "mechanistic interpretability (Elhage et al.)", "mesa-optimization / inner alignment"],
+              "references": {
+                "easy": ["'Human Compatible' — Stuart Russell"],
+                "mid": ["'The Alignment Problem' — Brian Christian", "Paul Christiano's alignment forum posts"],
+                "deep": ["'Superintelligence' — Nick Bostrom", "Anthropic's core views on alignment (anthropic.com)"],
+                "niche": ["LessWrong / Alignment Forum research posts", "Mechanistic Interpretability blog (Anthropic)", "MIRI research archive (intelligence.org)"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "fashion",
+      "name": "Fashion",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "fashion_history",
+          "name": "Fashion History",
+          "topics": [
+            {
+              "id": "japanese_fashion",
+              "name": "Japanese Fashion & Subcultures",
+              "subtopics": ["Harajuku street fashion evolution", "Rei Kawakubo / Comme des Garçons deconstruction", "wabi-sabi aesthetic in fashion", "Ura-Harajuku / 'ura-hara'", "gyaru evolution"],
+              "niche_topics": ["Ura-Harajuku brands (Bape, Undercover) and NIGO's network", "Yohji Yamamoto's 1981 Paris debut 'shock'", "kei visual tradition", "Japanese street fashion magazines (Fruits, Tune)", "Junya Watanabe's technical collaboration pieces"],
+              "references": {
+                "easy": ["'The Japanese Revolution in Paris Fashion' — Yuniya Kawamura"],
+                "mid": ["'Fashion-ology: An Introduction to Fashion Studies' — Kawamura", "'Japonism in Fashion' — Kyoto Costume Institute"],
+                "deep": ["'Rei Kawakubo / Comme des Garçons: Art of the In-Between' — MoMA catalogue"],
+                "niche": ["Fruits magazine archive (scans online)", "Kei Kurino's writing on Japanese fashion", "System Magazine Japan issues"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "fashion_systems",
+          "name": "Fashion Supply Chain & Systems",
+          "topics": [
+            {
+              "id": "fast_fashion",
+              "name": "Fast Fashion Economy",
+              "subtopics": ["Zara's just-in-time model", "fast fashion environmental cost", "labor conditions (Rana Plaza)", "microplastic shedding from synthetics", "overproduction statistics"],
+              "niche_topics": ["Shein's algorithmic trend detection (ROAS-first design)", "Temu's cross-border de minimis loophole abuse", "dead stock liquidation markets", "material passports for garments", "Fashion Revolution's transparency index"],
+              "references": {
+                "easy": ["'Overdressed: The Shockingly High Cost of Cheap Fashion' — Elizabeth Cline"],
+                "mid": ["'Fashionopolis' — Dana Thomas", "'The New Fashion Rules' — Orsola de Castro"],
+                "deep": ["Fashion Revolution 'Fashion Transparency Index' (annual)", "Pulse of the Fashion Industry report"],
+                "niche": ["Remake's corporate accountability scorecard", "Common Objective supply chain data", "Shein design process expose (Rest of World, 2022)"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "consumerism",
+      "name": "Consumerism",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "consumer_psychology",
+          "name": "Consumer Psychology",
+          "topics": [
+            {
+              "id": "planned_obsolescence",
+              "name": "Planned Obsolescence",
+              "subtopics": ["functional vs psychological obsolescence", "Phoebus cartel (lightbulb lifespan)", "Apple battery throttling case", "right-to-repair movement", "software end-of-life policies"],
+              "niche_topics": ["Sloan / GM annual model change strategy (1920s)", "Phoebus cartel 1000-hour bulb agreement documentation", "Centennial Bulb (Livermore) — longest burning light", "EU Ecodesign directive repair obligations", "iFixit teardown economics"],
+              "references": {
+                "easy": ["'The Story of Stuff' — Annie Leonard (documentary + book)"],
+                "mid": ["'Made to Break' — Giles Slade"],
+                "deep": ["'The Waste Makers' — Vance Packard (1960, original planned obsolescence critique)"],
+                "niche": ["Phoebus cartel archival documents (digitized)", "iFixit right-to-repair policy blog", "EU Product Ecodesign Regulation text"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "marketing",
+      "name": "Marketing",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "brand_building",
+          "name": "Brand Building & Strategy",
+          "topics": [
+            {
+              "id": "cult_brands",
+              "name": "Cult Brands",
+              "subtopics": ["identity-based loyalty", "anti-marketing authenticity", "community as product", "scarcity mechanics", "brand mythology"],
+              "niche_topics": ["Harley-Davidson HOG community engineering", "Supreme's drop culture blueprint", "Glossier's community-to-product pipeline", "Dr. Martens brand equity erosion post-PE", "Patagonia's 'Don't Buy This Jacket' paradox"],
+              "references": {
+                "easy": ["'Building a StoryBrand' — Donald Miller"],
+                "mid": ["'Eating the Big Fish' — Adam Morgan", "'Lovemarks' — Kevin Roberts"],
+                "deep": ["'How Brands Grow' — Byron Sharp"],
+                "niche": ["Rory Sutherland's Spectator columns + Ogilvy Change work", "Dave Trott's blog", "BBH Labs (Bartle Bogle Hegarty research blog)"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "attention_economy",
+          "name": "Attention Economy",
+          "topics": [
+            {
+              "id": "persuasion_tech",
+              "name": "Persuasion Technology",
+              "subtopics": ["variable reward schedules", "dark patterns taxonomy", "social proof mechanics", "fear of missing out (FOMO)", "notification design as compulsion loop"],
+              "niche_topics": ["B.J. Fogg's behavior model (Fogg 2009) and its misuse", "Nir Eyal's hook model applied at Facebook/Instagram", "time well spent movement (Tristan Harris)", "Infinite scroll patent (Aza Raskin) and regret", "recommender systems rabbit hole dynamics"],
+              "references": {
+                "easy": ["'Hooked' — Nir Eyal"],
+                "mid": ["'Irresistible' — Adam Alter", "'The Shallows' — Nicholas Carr"],
+                "deep": ["'The Age of Surveillance Capitalism' — Shoshana Zuboff"],
+                "niche": ["Center for Humane Technology research", "Aza Raskin's infinite scroll regret talk (YouTube)", "Francis Haugen's Facebook Papers (substack archive)"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "religion",
+      "name": "Religion",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "comparative_religion",
+          "name": "Comparative Religion",
+          "topics": [
+            {
+              "id": "mysticism",
+              "name": "Mysticism Across Traditions",
+              "subtopics": ["Sufi mysticism (tariqa orders)", "Christian mysticism (Meister Eckhart)", "Jewish Kabbalah", "Hindu Advaita Vedanta", "Zen koan practice"],
+              "niche_topics": ["Ibn Arabi's Fusus al-Hikam and Unity of Being", "Hesychasm and the uncreated light controversy", "Sabbatean movement (Sabbatai Zevi)", "Gnostic Nag Hammadi texts discovery", "Entheogenic theory of religion origins"],
+              "references": {
+                "easy": ["'The World's Religions' — Huston Smith"],
+                "mid": ["'The Varieties of Religious Experience' — William James", "'Mysticism' — Evelyn Underhill"],
+                "deep": ["'The Mystical Theology of the Eastern Church' — Vladimir Lossky"],
+                "niche": ["Ibn Arabi Society journals", "Nag Hammadi Library online (gnosis.org)", "Omer Michaelis's Entheogen Theory research"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "social_dynamics",
+      "name": "Social Dynamics",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "group_behavior",
+          "name": "Group Behavior & Collective Intelligence",
+          "topics": [
+            {
+              "id": "social_contagion",
+              "name": "Social Contagion",
+              "subtopics": ["behavioral contagion vs informational contagion", "complex vs simple contagion", "social network topology effects", "moral outrage virality", "social norm change thresholds"],
+              "niche_topics": ["Centola's network experiments on behavior change", "Granovetter's threshold models", "pluralistic ignorance in preference cascades", "preference falsification (Timur Kuran)", "Roberta Sinatra's research on success in science"],
+              "references": {
+                "easy": ["'The Tipping Point' — Malcolm Gladwell"],
+                "mid": ["'Change: How to Make Big Things Happen' — Damon Centola", "'Going Viral' — Karine Nahon & Jeff Hemsley"],
+                "deep": ["'Threshold Models of Collective Behavior' — Granovetter (1978, AJS)"],
+                "niche": ["Centola lab publications (asc.upenn.edu)", "Kuran 'Private Truths, Public Lies' chapters", "Network Science journal (Barabási)"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "status_and_power",
+          "name": "Status & Power Dynamics",
+          "topics": [
+            {
+              "id": "prestige_vs_dominance",
+              "name": "Prestige vs Dominance Hierarchies",
+              "subtopics": ["evolved status seeking mechanisms", "costly signaling theory", "deference behavior in primates", "prestige bias in cultural learning", "dominance hierarchies in human organizations"],
+              "niche_topics": ["Henrich & Gil-White prestige vs dominance original paper (2001)", "testosterone-cortisol ratio in status contests", "social dominance orientation (SDO) scale", "gossip as status regulation mechanism", "vertical vs horizontal social comparison in social media"],
+              "references": {
+                "easy": ["'The Status Game' — Will Storr"],
+                "mid": ["'Hierarchy in the Forest: The Evolution of Egalitarian Behavior' — Christopher Boehm", "'The Righteous Mind' — Jonathan Haidt"],
+                "deep": ["'Grooming, Gossip, and the Evolution of Language' — Robin Dunbar"],
+                "niche": ["Henrich & Gil-White 2001 paper (Evolution and Human Behavior)", "Chris von Rueden's prestige research blog", "Robert Sapolsky's baboon dominance lectures (Stanford, YouTube)"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "mythology",
+      "name": "Mythology",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "comparative_mythology",
+          "name": "Comparative Mythology",
+          "topics": [
+            {
+              "id": "hero_journey",
+              "name": "Hero's Journey & Monomyth",
+              "subtopics": ["Campbell's monomyth stages", "separation-initiation-return structure", "threshold guardians", "descent to the underworld motif", "shapeshifter archetype"],
+              "niche_topics": ["Vogler's Hollywood adaptation of Campbell", "Propp's morphology of folktale (pre-Campbell structural analysis)", "Star Wars + Campbell collaboration", "Joseph Campbell and the mystic journey (Stanislav Grof connection)", "female hero journeys (Murdock's 'Heroine's Journey')"],
+              "references": {
+                "easy": ["'The Power of Myth' — Joseph Campbell (with Bill Moyers)"],
+                "mid": ["'The Hero with a Thousand Faces' — Joseph Campbell", "'The Writer's Journey' — Christopher Vogler"],
+                "deep": ["'Morphology of the Folktale' — Vladimir Propp"],
+                "niche": ["Collected Works of Joseph Campbell (Foundation)", "Eliade's 'Shamanism: Archaic Techniques of Ecstasy'", "Calvert Watkins' 'How to Kill a Dragon' (Proto-Indo-European formula)"]
+              }
+            },
+            {
+              "id": "mesopotamian_mythology",
+              "name": "Mesopotamian Mythology",
+              "subtopics": ["Enuma Elish creation epic", "Gilgamesh flood narrative", "Inanna's descent to underworld", "Anunnaki pantheon", "cuneiform tablets and decipherment"],
+              "niche_topics": ["Tablet XII and Gilgamesh's Sumerian origin (different from Akkadian)", "Inanna/Ishtar gender-fluid aspects in ritual", "Sitchin's misreadings vs actual Sumerian texts (contrast)", "Digital Corpus of Cuneiform Mathematical Texts", "En-hedu-anna — world's first named author"],
+              "references": {
+                "easy": ["'Myths from Mesopotamia' — Stephanie Dalley (Oxford World's Classics)"],
+                "mid": ["'The Epic of Gilgamesh' — Andrew George translation (Penguin Classics)"],
+                "deep": ["'Inanna, Queen of Heaven and Earth' — Wolkstein & Kramer"],
+                "niche": ["ETCSL (Electronic Text Corpus of Sumerian Literature, Oxford)", "CDLI (Cuneiform Digital Library Initiative)", "Andrew George's Gilgamesh philological commentary"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "theology",
+      "name": "Theology",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "philosophical_theology",
+          "name": "Philosophical Theology",
+          "topics": [
+            {
+              "id": "theodicy",
+              "name": "Theodicy — The Problem of Evil",
+              "subtopics": ["logical problem of evil", "evidential problem of evil", "soul-making theodicy (Hick)", "free will defense (Plantinga)", "skeptical theism"],
+              "niche_topics": ["Process theology response (Whitehead/Griffin)", "Openness of God theodicy", "Marilyn McCord Adams on horrendous evils", "Ivan Karamazov's rebellion vs Alyosha's response (Dostoevsky as theological text)", "protest theology (Wiesel, Rubenstein)"],
+              "references": {
+                "easy": ["'When Bad Things Happen to Good People' — Harold Kushner"],
+                "mid": ["'Evil and the God of Love' — John Hick"],
+                "deep": ["'God, Freedom, and Evil' — Alvin Plantinga"],
+                "niche": ["Marilyn McCord Adams 'Horrendous Evils and the Goodness of God'", "Journal of Analytic Theology", "D.Z. Phillips 'The Problem of Evil and the Problem of God'"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "philosophy",
+      "name": "Philosophy",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "philosophy_of_mind",
+          "name": "Philosophy of Mind",
+          "topics": [
+            {
+              "id": "consciousness",
+              "name": "Consciousness",
+              "subtopics": ["hard problem vs easy problems (Chalmers)", "qualia and phenomenal experience", "functionalism", "higher-order theories", "global workspace theory"],
+              "niche_topics": ["Integrated Information Theory (IIT 4.0) and its critics", "Orchestrated objective reduction (Penrose-Hameroff)", "Illusionism (Frankish)", "predictive processing / active inference (Friston FEP)", "phenomenal consciousness in single-celled organisms debate"],
+              "references": {
+                "easy": ["'Consciousness Explained' — Daniel Dennett"],
+                "mid": ["'The Conscious Mind' — David Chalmers", "'Being No One' — Thomas Metzinger (summary version first)"],
+                "deep": ["'Being No One' — Thomas Metzinger (full)", "'The Embodied Mind' — Varela, Thompson & Rosch"],
+                "niche": ["Karl Friston's Free Energy Principle papers (arXiv)", "Scott Aaronson's IIT critique (scottaaronson.blog)", "PhilPapers consciousness survey data"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "philosophy_of_science",
+          "name": "Philosophy of Science",
+          "topics": [
+            {
+              "id": "scientific_realism",
+              "name": "Scientific Realism vs Anti-realism",
+              "subtopics": ["structural realism", "van Fraassen's constructive empiricism", "Kuhn's paradigm shifts", "Lakatos research programs", "underdetermination of theory"],
+              "niche_topics": ["Ontic structural realism (Ladyman & Ross)", "Pessimistic meta-induction (Laudan)", "Stanford's 'no miracles' argument dissection", "Bas van Fraassen's voluntarist epistemology", "Hasok Chang's active realism"],
+              "references": {
+                "easy": ["'What Is This Thing Called Science?' — A.F. Chalmers"],
+                "mid": ["'The Structure of Scientific Revolutions' — Thomas Kuhn", "'The Scientific Image' — Bas van Fraassen"],
+                "deep": ["'Every Thing Must Go' — Ladyman & Ross"],
+                "niche": ["SEP (Stanford Encyclopedia of Philosophy) entries on scientific realism", "Hasok Chang's History and Philosophy of Science blog", "PhilSci Archive preprints"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "brands",
+      "name": "Brands & Brand Culture",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "brand_history",
+          "name": "Brand Histories",
+          "topics": [
+            {
+              "id": "luxury_brands",
+              "name": "Luxury Brand Architecture",
+              "subtopics": ["exclusivity as brand strategy", "LVMH conglomerate model", "savoir-faire heritage marketing", "counterfeit market dynamics", "accessible luxury vs true luxury"],
+              "niche_topics": ["LVMH's media ownership as brand protection", "Hermès Birkin supply scarcity as court-approved pricing power", "Richemont's strategy vs Kering", "resale market (StockX) brand value impact", "Gen Z luxury brand discovery vs millennials"],
+              "references": {
+                "easy": ["'The Luxury Strategy' — Kapferer & Bastien"],
+                "mid": ["'Bringing Home the Birkin' — Michael Tonello", "'Deluxe: How Luxury Lost Its Luster' — Dana Thomas"],
+                "deep": ["'The Cult of the Luxury Brand' — Chadha & Husband"],
+                "niche": ["BOF (Business of Fashion) intelligence reports", "Luca Solca's luxury equity research notes", "Highsnobiety's whitepaper on new luxury"]
+              }
+            },
+            {
+              "id": "streetwear_brands",
+              "name": "Streetwear Brand Culture",
+              "subtopics": ["drop model economics", "hypebeast culture sociology", "sneaker resale market", "collab as brand currency", "authenticity vs sell-out narrative"],
+              "niche_topics": ["Hiroshi Fujiwara's 'Fragment Design' network graph", "Jeff Staple's Pigeon Dunk riot — drop culture milestone", "Travis Scott x Nike co-design as artist brand merging", "StockX market manipulation claims", "Virgil Abloh's irreverence method (quotation marks design language)"],
+              "references": {
+                "easy": ["'Sneaker Wars' — Barbara Smit"],
+                "mid": ["'The Sneaker Book' — Tom Vanderbilt", "Complex Sneakers YouTube deep dives"],
+                "deep": ["'Sneakers' — Unorthodox Styles", "'Supreme: A History' — Jeff Staple + Jacob Victorine"],
+                "niche": ["Grailed 'The Grail' column", "Highsnobiety Journal archive", "APTNL blog (archival streetwear brand history)"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "poetry",
+      "name": "Poetry",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "poetic_traditions",
+          "name": "Poetic Traditions",
+          "topics": [
+            {
+              "id": "urdu_poetry",
+              "name": "Urdu Poetry — Ghazal & Nazm",
+              "subtopics": ["ghazal structure (radif, maqta, takhallus)", "Mir Taqi Mir's minimalism", "Ghalib's opacity", "Faiz Ahmed Faiz's political romanticism", "Progressive Writers Movement"],
+              "niche_topics": ["Mir Anees' marsia elegy form", "Naseer Turabi's grief-laden ghazals", "Ameer Khusro's Khari Boli experiments", "Urdu literary magazines (Shab-khun, Funoon)", "partition poetry (Manto + Faiz crossover)"],
+              "references": {
+                "easy": ["'Love Sonnets of Ghalib' — Sarfaraz Niazi"],
+                "mid": ["'The Penguin Book of Modern Urdu Poetry' — Mahmood Jamal", "'Passionate Attachments: Selves, Relationships & Others' — Frances Pritchett"],
+                "deep": ["Frances Pritchett's 'Nets of Awareness: Urdu Poetry and Its Critics'"],
+                "niche": ["Rekhta.org (largest Urdu poetry database)", "Frances Pritchett's Ghalib web commentary (columbia.edu/itc/mealac)", "Annual Urdu book fair (Delhi) lecture recordings"]
+              }
+            },
+            {
+              "id": "modernist_poetry",
+              "name": "Modernist Poetry",
+              "subtopics": ["imagism vs symbolism", "The Waste Land as cultural rupture", "Pound's ideogrammic method", "Hart Crane's lyric density", "confessional poetry origins"],
+              "niche_topics": ["The Cantos + Pound's Chinese character misreadings", "Objectivist poetry movement (Zukofsky, Oppen)", "Language Poetry (Charles Bernstein, Lyn Hejinian)", "Elizabeth Bishop's chronic revision process", "Anne Carson's hybrid prose-poetry genre"],
+              "references": {
+                "easy": ["'The Oxford Book of Modern Poetry' — Frank Kermode (ed.)"],
+                "mid": ["'The Waste Land' annotated edition — T.S. Eliot", "'The Art of Poetry' — Paul Valéry"],
+                "deep": ["'The ABC of Reading' — Ezra Pound"],
+                "niche": ["Poetry Foundation archive + Anne Carson essays", "Jacket2 magazine online", "Tim Kazurinsky's 'The Making of the Waste Land' criticism essays"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "writing",
+      "name": "Writing",
+      "depth_mode": "breadth_first",
+      "subfields": [
+        {
+          "id": "craft",
+          "name": "Craft of Writing",
+          "topics": [
+            {
+              "id": "long_form_journalism",
+              "name": "Long-Form Journalism",
+              "subtopics": ["narrative structure in non-fiction", "immersion journalism techniques", "scene vs summary", "dialogue reconstruction ethics", "fact-checking process"],
+              "niche_topics": ["Gay Talese's 'The Voyeur's Motel' methodology controversy", "Janet Malcolm's 'The Journalist and the Murderer' ethics framework", "Hunter Thompson's gonzo method", "Ryszard Kapuściński's magical non-fiction accusation", "new new journalism (David Carr, Ta-Nehisi Coates)"],
+              "references": {
+                "easy": ["'On Writing Well' — William Zinsser"],
+                "mid": ["'The New New Journalism' — Robert Boynton (interviews)", "'The Art of Fact' — Kerrane & Yagoda"],
+                "deep": ["'The Art of Nonfiction' — Ayn Rand (lecture notes)", "'The Journalist and the Murderer' — Janet Malcolm"],
+                "niche": ["Nieman Storyboard (Harvard Nieman Foundation)", "Columbia Journalism Review craft essays", "The Atavist magazine story dissections"]
+              }
+            },
+            {
+              "id": "essay_form",
+              "name": "The Essay as Form",
+              "subtopics": ["Montaigne's essai ('trial') method", "personal essay vs critical essay", "lyric essay form", "the digressive structure", "voice and ethos in essays"],
+              "niche_topics": ["Seneca's epistulae as essay precursor", "Francis Bacon's aphoristic essays vs Montaigne", "Anne Carson's 'autobiography of red' as essay-poem", "David Foster Wallace's footnote as form", "Brian Dillon's 'Essayism' meta-essay"],
+              "references": {
+                "easy": ["'Essayism' — Brian Dillon"],
+                "mid": ["'The Complete Essays' — Michel de Montaigne (M.A. Screech translation)", "'Consider the Lobster' — David Foster Wallace"],
+                "deep": ["'The Anatomy of Melancholy' — Robert Burton (essay-encyclopedia hybrid)"],
+                "niche": ["The White Review essays archive", "Granta essay commissions archive", "Brian Dillon's Frieze columns"]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+name: daily-research
+
+on:
+  schedule:
+    # 3:35 AM UTC = 9:05 AM IST (UTC+5:30)
+    - cron: "35 3 * * *"
+  workflow_dispatch:
+    inputs:
+      topic_id:
+        description: "Override topic ID (leave blank to use state/progress.json)"
+        required: false
+        default: ""
+      day:
+        description: "Override day number 1–7 (leave blank to use state)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  research-and-email:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Read current state
+        id: state
+        run: |
+          TOPIC_ID=$(python3 -c "import json; s=json.load(open('state/progress.json')); print(s['current_topic_id'])")
+          DAY=$(python3 -c "import json; s=json.load(open('state/progress.json')); print(s['current_day'])")
+          WEEK=$(python3 -c "import json; s=json.load(open('state/progress.json')); print(s['current_week'])")
+
+          # Allow workflow_dispatch overrides
+          if [ -n "${{ github.event.inputs.topic_id }}" ]; then
+            TOPIC_ID="${{ github.event.inputs.topic_id }}"
+          fi
+          if [ -n "${{ github.event.inputs.day }}" ]; then
+            DAY="${{ github.event.inputs.day }}"
+          fi
+
+          echo "topic_id=$TOPIC_ID" >> $GITHUB_OUTPUT
+          echo "day=$DAY" >> $GITHUB_OUTPUT
+          echo "week=$WEEK" >> $GITHUB_OUTPUT
+          echo "branch=topic/$WEEK-$TOPIC_ID" >> $GITHUB_OUTPUT
+          echo "Topic: $TOPIC_ID | Day: $DAY | Week: $WEEK"
+
+      - name: Create or switch to topic branch
+        run: |
+          BRANCH="${{ steps.state.outputs.branch }}"
+          git config user.name "dm-plus[bot]"
+          git config user.email "dm-plus[bot]@users.noreply.github.com"
+
+          if git ls-remote --exit-code --heads origin "$BRANCH" > /dev/null 2>&1; then
+            git checkout "$BRANCH"
+            git pull origin "$BRANCH" --rebase
+          else
+            git checkout -b "$BRANCH"
+          fi
+
+      - name: Run research + synthesis + email
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          # CORE_API_KEY is optional, unauthenticated access is available
+          # CORE_API_KEY: ${{ secrets.CORE_API_KEY }}
+        working-directory: agent
+        run: python3 run.py
+
+      - name: Commit research artifact to topic branch
+        run: |
+          BRANCH="${{ steps.state.outputs.branch }}"
+          TOPIC="${{ steps.state.outputs.topic_id }}"
+          DAY="${{ steps.state.outputs.day }}"
+          DATE=$(date -u +%Y-%m-%d)
+
+          git add output/research/
+          git diff --staged --quiet || git commit -m "research($TOPIC): day $DAY artifact [$DATE]"
+          git push origin "$BRANCH"
+
+      - name: Merge state update back to main
+        run: |
+          git checkout main
+          git pull origin main --rebase
+          git add state/progress.json
+          git diff --staged --quiet || git commit -m "state: advance to day ${{ steps.state.outputs.day }} on ${{ steps.state.outputs.topic_id }}"
+          git push origin main
+
+      - name: Summary
+        run: |
+          echo "### dm-plus Daily Run Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| | |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Topic | ${{ steps.state.outputs.topic_id }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Day | ${{ steps.state.outputs.day }}/7 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Week | ${{ steps.state.outputs.week }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Branch | ${{ steps.state.outputs.branch }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Email sent to \`${{ secrets.EMAIL_TO }}\` via Resend ✓" >> $GITHUB_STEP_SUMMARY

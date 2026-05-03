@@ -101,7 +101,7 @@ jobs:
       - name: Merge state update back to main
         run: |
           git checkout main
-          git pull origin main --rebase
+          git pull origin main --rebase --autostash
           git add state/progress.json
           git diff --staged --quiet || git commit -m "state: advance to day ${{ steps.state.outputs.day }} on ${{ steps.state.outputs.topic_id }}"
           git push origin main

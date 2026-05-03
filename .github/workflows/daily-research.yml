@@ -87,23 +87,25 @@ jobs:
         working-directory: agent
         run: python3 run.py
 
-      - name: Commit research artifact to topic branch
+      - name: Commit research artifact + state to topic branch, then update main
         run: |
           BRANCH="${{ steps.state.outputs.branch }}"
           TOPIC="${{ steps.state.outputs.topic_id }}"
           DAY="${{ steps.state.outputs.day }}"
           DATE=$(date -u +%Y-%m-%d)
 
-          git add output/research/
-          git diff --staged --quiet || git commit -m "research($TOPIC): day $DAY artifact [$DATE]"
+          # Commit everything on the topic branch while we're still here
+          git add output/research/ state/progress.json
+          git diff --staged --quiet || git commit -m "research($TOPIC): day $DAY artifact + state [$DATE]"
           git push origin "$BRANCH"
 
-      - name: Merge state update back to main
-        run: |
+          # Bring state/progress.json to main cleanly via checkout, no stash needed
+          STATE_SHA=$(git rev-parse HEAD)
           git checkout main
-          git pull origin main --rebase --autostash
+          git pull origin main --rebase
+          git checkout "$BRANCH" -- state/progress.json
           git add state/progress.json
-          git diff --staged --quiet || git commit -m "state: advance to day ${{ steps.state.outputs.day }} on ${{ steps.state.outputs.topic_id }}"
+          git diff --staged --quiet || git commit -m "state: advance to day $DAY on $TOPIC [$DATE]"
           git push origin main
 
       - name: Summary

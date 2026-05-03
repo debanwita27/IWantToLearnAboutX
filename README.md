@@ -100,4 +100,4 @@ See [`topics/taxonomy.json`](topics/taxonomy.json) for the full tree.
 
 ## Project
 
-**dm-plus** — be a better and more knowledgeable version of yourself than yesterday.
+be a better and more knowledgeable version of yourself than yesterday.

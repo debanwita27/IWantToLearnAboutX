@@ -180,24 +180,32 @@ def fetch_semantic_scholar(query: str, max_results: int = 4) -> list[Article]:
         "limit": max_results,
         "fields": "title,abstract,url,year",
     }
-    try:
-        r = requests.get(url, params=params, headers=HEADERS, timeout=TIMEOUT)
-        r.raise_for_status()
-        data = r.json()
-        articles = []
-        for paper in data.get("data", []):
-            abstract = (paper.get("abstract") or "")[:500]
-            articles.append(Article(
-                title=paper.get("title", ""),
-                url=paper.get("url") or f"https://www.semanticscholar.org/paper/{paper.get('paperId','')}",
-                snippet=abstract,
-                source="Semantic Scholar",
-                depth_tag="deep",
-            ))
-        return articles
-    except Exception as e:
-        log.warning(f"Semantic Scholar fetch failed for '{query}': {e}")
-        return []
+    for attempt in range(3):
+        try:
+            r = requests.get(url, params=params, headers=HEADERS, timeout=TIMEOUT)
+            if r.status_code == 429:
+                wait = 10 * (attempt + 1)
+                log.warning(f"Semantic Scholar rate limited, waiting {wait}s...")
+                time.sleep(wait)
+                continue
+            r.raise_for_status()
+            data = r.json()
+            articles = []
+            for paper in data.get("data", []):
+                abstract = (paper.get("abstract") or "")[:500]
+                articles.append(Article(
+                    title=paper.get("title", ""),
+                    url=paper.get("url") or f"https://www.semanticscholar.org/paper/{paper.get('paperId','')}",
+                    snippet=abstract,
+                    source="Semantic Scholar",
+                    depth_tag="deep",
+                ))
+            return articles
+        except Exception as e:
+            log.warning(f"Semantic Scholar fetch failed for '{query}': {e}")
+            return []
+    log.warning(f"Semantic Scholar gave up after retries for '{query}'")
+    return []
 
 
 # ── CORE Open Access ───────────────────────────────────────────────────────────
@@ -359,11 +367,26 @@ def fetch_youtube_transcripts(query: str, max_videos: int = 2) -> list[Article]:
 # ── Wikipedia ─────────────────────────────────────────────────────────────────
 
 def fetch_wikipedia(query: str) -> list[Article]:
-    url = "https://en.wikipedia.org/api/rest_v1/page/summary/" + urllib.parse.quote(
-        query.replace(" ", "_")
-    )
+    # Use the search API first to resolve the correct page title, then fetch summary
+    search_url = "https://en.wikipedia.org/w/api.php"
+    search_params = {
+        "action": "query",
+        "list": "search",
+        "srsearch": query,
+        "srlimit": 1,
+        "format": "json",
+    }
     try:
-        r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+        sr = requests.get(search_url, params=search_params, headers=HEADERS, timeout=TIMEOUT)
+        sr.raise_for_status()
+        results = sr.json().get("query", {}).get("search", [])
+        if not results:
+            return []
+        page_title = results[0]["title"]
+        summary_url = "https://en.wikipedia.org/api/rest_v1/page/summary/" + urllib.parse.quote(
+            page_title.replace(" ", "_")
+        )
+        r = requests.get(summary_url, headers=HEADERS, timeout=TIMEOUT)
         r.raise_for_status()
         data = r.json()
         extract = data.get("extract", "")[:600]

@@ -78,7 +78,8 @@ def main() -> None:
     digest = synthesize(bundle, week)
     log.info("Synthesis complete")
 
-    artifact_path = save_artifact(digest)
+    output_dir = os.path.join(os.path.dirname(__file__), "..", "output", "research")
+    artifact_path = save_artifact(digest, output_dir=output_dir)
     log.info(f"Artifact written: {artifact_path}")
 
     send(digest)

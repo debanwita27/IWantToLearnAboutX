@@ -204,7 +204,7 @@ def send(digest: DailyDigest) -> bool:
 
     try:
         params: resend.Emails.SendParams = {
-            "from": "dm-plus <learning@resend.dev>",
+            "from": "dm-plus <onboarding@resend.dev>",
             "to": [to_email],
             "subject": subject,
             "html": html,

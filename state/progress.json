@@ -2,10 +2,11 @@
   "_comment": "Updated daily by GitHub Action. current_day resets to 1 each Monday. Do not edit manually.",
   "current_week": "2026-19",
   "current_topic_id": "consensus_algorithms",
-  "current_day": 7,
-  "completed_topics": [],
+  "current_day": 1,
+  "completed_topics": [
+    "consensus_algorithms"
+  ],
   "queue": [
-    "consensus_algorithms",
     "storage_engines",
     "distributed_transactions",
     "crdt_theory",

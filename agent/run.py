@@ -52,11 +52,15 @@ def advance_state(state: dict) -> dict:
     if state["current_day"] < 7:
         state["current_day"] += 1
     else:
-        state["completed_topics"].append(state["current_topic_id"])
-        queue = state.get("queue", [])
+        completed = state["current_topic_id"]
+        state["completed_topics"].append(completed)
+        # Filter out the completed topic and deduplicate to prevent restart bug
+        queue = [t for t in state.get("queue", []) if t != completed]
         if queue:
-            state["current_topic_id"] = queue.pop(0)
-            state["queue"] = queue
+            next_topic = queue.pop(0)
+            state["current_topic_id"] = next_topic
+            # Also ensure the new current topic isn't sitting in the queue
+            state["queue"] = [t for t in queue if t != next_topic]
         else:
             log.warning("Topic queue is empty! Add more topics to taxonomy.json")
         state["current_day"] = 1

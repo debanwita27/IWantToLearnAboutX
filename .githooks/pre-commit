@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Run the dm-plus test suite before every commit.
+# Tests run in the .venv if present, otherwise falls back to system pytest.
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+if [[ -x "$REPO_ROOT/.venv/bin/pytest" ]]; then
+  PYTEST="$REPO_ROOT/.venv/bin/pytest"
+elif command -v pytest &>/dev/null; then
+  PYTEST="pytest"
+else
+  echo "[dm-plus] pytest not found. Run: pip install -r requirements.txt" >&2
+  exit 1
+fi
+
+echo "[dm-plus] Running tests before commit..."
+"$PYTEST" "$REPO_ROOT/tests/" -q --tb=short
+
+echo "[dm-plus] All tests passed."

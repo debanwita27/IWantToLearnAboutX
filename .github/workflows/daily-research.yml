@@ -43,7 +43,7 @@ jobs:
       - name: Read current state
         id: state
         run: |
-          TOPIC_ID=$(python3 -c "import json; s=json.load(open('state/progress.json')); print(s['current_topic_id'])")
+          TOPIC_ID=$(python3 -c "import json; s=json.load(open('state/progress.json')); print(s['rotation'][s['rotation_pos']])")
           DAY=$(python3 -c "import json; s=json.load(open('state/progress.json')); print(s['current_day'])")
           WEEK=$(python3 -c "import json; s=json.load(open('state/progress.json')); print(s['current_week'])")
 

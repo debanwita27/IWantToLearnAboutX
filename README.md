@@ -75,7 +75,15 @@ topic/2026-19-consensus-algorithms/
 
 `Settings → Secrets and variables → Actions → New repository secret`
 
-### 4. That's it
+### 4. Activate the pre-commit hook
+
+Tests run locally before every commit. Wire them up once after cloning:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+### 5. That's it
 
 The action runs every day at 3:35 AM UTC (9:05 AM IST). First run picks Week 1, Topic 1 from the queue.
 

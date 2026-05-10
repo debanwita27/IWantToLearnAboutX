@@ -84,7 +84,7 @@ def build_html(digest: DailyDigest) -> str:
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>dm-plus · {digest.topic_name} · Day {digest.day}</title>
+  <title>dm-plus · {digest.topic_name} › {digest.subtopic} · Day {digest.day}</title>
 </head>
 <body style="margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
   <div style="max-width:640px;margin:0 auto;padding:32px 16px;">
@@ -93,11 +93,14 @@ def build_html(digest: DailyDigest) -> str:
     <div style="border-bottom:2px solid #1d1d1f;padding-bottom:20px;margin-bottom:28px;">
       <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
                   color:#6B7280;margin-bottom:8px;">dm-plus · {digest.week}</div>
-      <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#1d1d1f;line-height:1.2;">
+      <h1 style="margin:0 0 4px;font-size:26px;font-weight:800;color:#1d1d1f;line-height:1.2;">
         {digest.topic_name}
       </h1>
+      <div style="font-size:15px;font-weight:600;color:#374151;margin-bottom:8px;">
+        › {digest.subtopic}
+      </div>
       <div style="font-size:13px;color:#6B7280;margin-bottom:12px;">
-        Day {digest.day}/7 · {digest.progress_bar.split("·")[2].strip().replace("-"," ")}
+        Day {digest.day}/7 · {digest.progress_bar.split("·")[-1].strip().replace("-"," ")}
       </div>
       {bar_html}
       <div style="font-size:12px;color:#9CA3AF;margin-top:6px;font-style:italic;">
@@ -128,7 +131,7 @@ def build_html(digest: DailyDigest) -> str:
         dm-plus · a plus version of yourself, one week at a time
       </div>
       <div style="font-size:11px;color:#D1D5DB;">
-        Week {digest.week} · {digest.topic_name}
+        Week {digest.week} · {digest.topic_name} › {digest.subtopic}
       </div>
     </div>
 
@@ -164,7 +167,7 @@ def _get_focus_label(day: int, progress_bar: str) -> str:
 def build_plaintext(digest: DailyDigest) -> str:
     lines = [
         f"dm-plus · {digest.week}",
-        f"{digest.topic_name} · Day {digest.day}/7",
+        f"{digest.topic_name} › {digest.subtopic} · Day {digest.day}/7",
         "=" * 60,
         "",
         digest.nugget,
@@ -198,7 +201,7 @@ def send(digest: DailyDigest) -> bool:
     if not to_email:
         raise EnvironmentError("EMAIL_TO is not set")
 
-    subject = f"[dm-plus] Day {digest.day}/7 · {digest.topic_name}"
+    subject = f"[dm-plus] Day {digest.day}/7 · {digest.topic_name} › {digest.subtopic}"
     html = build_html(digest)
     text = build_plaintext(digest)
 

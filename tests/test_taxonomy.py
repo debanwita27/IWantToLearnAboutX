@@ -123,16 +123,18 @@ def test_no_duplicate_field_ids(taxonomy):
 
 # ── Queue ↔ Taxonomy consistency ───────────────────────────────────────────────
 
-def test_all_queue_topics_exist_in_taxonomy(state, all_topic_ids):
-    """Every topic in the queue must exist in taxonomy.json."""
-    missing = [t for t in state["queue"] if t not in all_topic_ids]
-    assert not missing, f"Queue topics not found in taxonomy: {missing}"
+def test_all_rotation_topics_exist_in_taxonomy(state, all_topic_ids):
+    """Every topic in the rotation must exist in taxonomy.json."""
+    missing = [t for t in state["rotation"] if t not in all_topic_ids]
+    assert not missing, f"Rotation topics not found in taxonomy: {missing}"
 
 
-def test_current_topic_exists_in_taxonomy(state, all_topic_ids):
-    current = state["current_topic_id"]
+def test_current_active_topic_exists_in_taxonomy(state, all_topic_ids):
+    rotation = state["rotation"]
+    pos = state["rotation_pos"]
+    current = rotation[pos]
     assert current in all_topic_ids, (
-        f"current_topic_id '{current}' not found in taxonomy"
+        f"Active topic '{current}' (rotation[{pos}]) not found in taxonomy"
     )
 
 

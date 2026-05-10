@@ -19,6 +19,7 @@ def make_digest(**overrides):
     defaults = dict(
         topic_id="consensus_algorithms",
         topic_name="Consensus Algorithms",
+        subtopic="Raft leader election",
         day=3,
         week="2026-19",
         nugget="Raft is a consensus algorithm. It elects a leader. The leader replicates logs. Simple until it isn't.",
@@ -27,7 +28,7 @@ def make_digest(**overrides):
             {"title": "HN Discussion", "url": "https://hn.example.com/1", "depth_tag": "mid", "why": "War stories"},
         ],
         reference_pick="**Designing Data-Intensive Applications** — Martin Kleppmann. Chapter 9 is the clearest explanation of consensus you'll find outside a whiteboard.",
-        progress_bar="Day 3/7 · Consensus Algorithms · depth-first",
+        progress_bar="Day 3/7 · Consensus Algorithms › Raft leader election · depth-first",
         raw_bundle_context="# Raw context here",
     )
     defaults.update(overrides)
@@ -39,6 +40,11 @@ def make_digest(**overrides):
 def test_build_html_contains_topic_name():
     html = build_html(make_digest())
     assert "Consensus Algorithms" in html
+
+
+def test_build_html_contains_subtopic():
+    html = build_html(make_digest())
+    assert "Raft leader election" in html
 
 
 def test_build_html_contains_day_progress():
@@ -171,12 +177,13 @@ def test_send_uses_correct_recipient(mock_send):
 
 @patch.dict(os.environ, {"RESEND_API_KEY": "test_key", "EMAIL_TO": "test@example.com"})
 @patch("emailer.resend.Emails.send")
-def test_send_subject_contains_day_and_topic(mock_send):
+def test_send_subject_contains_day_topic_and_subtopic(mock_send):
     mock_send.return_value = {"id": "abc-123"}
-    send(make_digest(day=5, topic_name="Storage Engines"))
+    send(make_digest(day=5, topic_name="Storage Engines", subtopic="B-tree internals"))
     call_params = mock_send.call_args[0][0]
     assert "5/7" in call_params["subject"]
     assert "Storage Engines" in call_params["subject"]
+    assert "B-tree internals" in call_params["subject"]
 
 
 def test_send_raises_without_api_key():

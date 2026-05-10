@@ -55,6 +55,7 @@ class Article:
 class ResearchBundle:
     topic_id: str
     topic_name: str
+    subtopic: str             # specific subtopic studied this week
     day: int
     depth_mode: str           # depth_first | breadth_first
     day_focus: str            # human-readable focus for today
@@ -63,7 +64,7 @@ class ResearchBundle:
 
     def to_context_string(self) -> str:
         lines = [
-            f"# Research Bundle: {self.topic_name}",
+            f"# Research Bundle: {self.topic_name} › {self.subtopic}",
             f"Day {self.day}/7 | Focus: {self.day_focus} | Mode: {self.depth_mode}",
             "",
         ]
@@ -118,23 +119,22 @@ def get_day_focus(day: int, depth_mode: str) -> str:
     return arcs.get(day, breadth_arcs[1])
 
 
-def build_search_queries(topic: dict, day: int, depth_mode: str) -> list[str]:
+def build_search_queries(topic: dict, day: int, depth_mode: str, subtopic_idx: int = 0) -> list[str]:
     name = topic["name"]
-    subtopics = topic.get("subtopics", [])
-    niche = topic.get("niche_topics", [])
+    all_subs = topic.get("subtopics", []) + topic.get("niche_topics", [])
+    current_sub = all_subs[subtopic_idx] if subtopic_idx < len(all_subs) else name
 
-    base = [name]
     if day <= 3:
-        base += subtopics[:3]
+        base = [f"{name} {current_sub}", current_sub, name]
     elif day == 4:
-        base += [f"{name} failure modes", f"{name} production problems"]
+        base = [f"{current_sub} failure modes", f"{current_sub} tradeoffs", name]
     elif day == 5:
-        base += niche[:3]
+        base = [f"{current_sub} internals", f"{current_sub} implementation", name]
     elif day == 6:
-        base += [f"{name} applications", f"{name} real world"]
-    elif day == 7:
-        base += [f"{name} open problems", f"{name} future research"]
-    return base[:4]
+        base = [f"{current_sub} real world", f"{current_sub} production", name]
+    else:
+        base = [f"{current_sub} open problems", f"{name} {current_sub} future", name]
+    return [q for q in base if q][:4]
 
 
 # ── arXiv ─────────────────────────────────────────────────────────────────────
@@ -543,25 +543,29 @@ def fetch_niche_blogs(topic_id: str, query: str) -> list[Article]:
 
 # ── Main orchestrator ──────────────────────────────────────────────────────────
 
-def research(topic_id: str, day: int) -> ResearchBundle:
+def research(topic_id: str, day: int, subtopic_idx: int = 0) -> ResearchBundle:
     topic = load_topic(topic_id)
     depth_mode = topic["_depth_mode"]
     day_focus = get_day_focus(day, depth_mode)
-    queries = build_search_queries(topic, day, depth_mode)
+    queries = build_search_queries(topic, day, depth_mode, subtopic_idx=subtopic_idx)
     primary_query = queries[0]
+
+    all_subs = topic.get("subtopics", []) + topic.get("niche_topics", [])
+    subtopic = all_subs[subtopic_idx] if subtopic_idx < len(all_subs) else topic["name"]
 
     field_id = topic_id.split("_")[0] if "_" in topic_id else "default"
 
     bundle = ResearchBundle(
         topic_id=topic_id,
         topic_name=topic["name"],
+        subtopic=subtopic,
         day=day,
         depth_mode=depth_mode,
         day_focus=day_focus,
         taxonomy_references=topic.get("references", {}),
     )
 
-    log.info(f"Researching '{topic['name']}' — Day {day} ({day_focus})")
+    log.info(f"Researching '{topic['name']} › {subtopic}' — Day {day} ({day_focus})")
     log.info(f"Queries: {queries}")
 
     articles: list[Article] = []
@@ -616,5 +620,6 @@ if __name__ == "__main__":
     import sys
     topic_id = sys.argv[1] if len(sys.argv) > 1 else "consensus_algorithms"
     day = int(sys.argv[2]) if len(sys.argv) > 2 else 1
-    bundle = research(topic_id, day)
+    subtopic_idx = int(sys.argv[3]) if len(sys.argv) > 3 else 0
+    bundle = research(topic_id, day, subtopic_idx=subtopic_idx)
     print(bundle.to_context_string())

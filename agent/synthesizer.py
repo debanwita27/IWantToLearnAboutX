@@ -28,12 +28,13 @@ MODEL = "gpt-4o-mini"
 class DailyDigest:
     topic_id: str
     topic_name: str
+    subtopic: str           # specific subtopic studied this week
     day: int
     week: str
     nugget: str             # main 600-900 word piece
     curated_links: list[dict]   # [{title, url, depth_tag, why}]
     reference_pick: str     # one Skunk Works-style recommendation
-    progress_bar: str       # "Day 4/7 · Consensus Algorithms · software"
+    progress_bar: str       # "Day 4/7 · Consensus Algorithms › Raft leader election"
     raw_bundle_context: str
 
 
@@ -290,7 +291,11 @@ def synthesize(bundle: ResearchBundle, week: str) -> DailyDigest:
 
     system_prompt = DEPTH_SYSTEM if depth_mode == "depth_first" else BREADTH_SYSTEM
     prompts = DEPTH_PROMPTS if depth_mode == "depth_first" else BREADTH_PROMPTS
-    user_prompt = prompts[day].format(
+    subtopic_prefix = (
+        f"**This week's specific focus: {bundle.subtopic}** "
+        f"(within the broader topic of {bundle.topic_name})\n\n"
+    )
+    user_prompt = subtopic_prefix + prompts[day].format(
         topic_name=bundle.topic_name,
         context=bundle.to_context_string()[:3500],
     )
@@ -332,11 +337,15 @@ def synthesize(bundle: ResearchBundle, week: str) -> DailyDigest:
     log.info("Picking reference...")
     reference_pick = _chat(client, system_prompt, ref_prompt, max_tokens=300)
 
-    progress_bar = f"Day {day}/7 · {bundle.topic_name} · {bundle.depth_mode.replace('_', '-')}"
+    progress_bar = (
+        f"Day {day}/7 · {bundle.topic_name} › {bundle.subtopic} · "
+        f"{bundle.depth_mode.replace('_', '-')}"
+    )
 
     return DailyDigest(
         topic_id=bundle.topic_id,
         topic_name=bundle.topic_name,
+        subtopic=bundle.subtopic,
         day=day,
         week=week,
         nugget=nugget,

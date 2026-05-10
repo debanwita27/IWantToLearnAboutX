@@ -1,19 +1,18 @@
 """
-test_state.py — tests for advance_state logic and state/progress.json integrity
+test_state.py — tests for the round-robin rotation advance_state logic
+and state/progress.json on-disk integrity.
 
-Critical coverage:
-- Day counter increments correctly days 1-6
-- Topic advances at day 7 (pops queue, resets day to 1)
-- THE BUG: completed topic must never reappear as current or in queue
-- New current topic must not remain in queue (no future restart)
-- Empty queue handled gracefully
-- state/progress.json on disk is internally consistent
+Rotation model:
+- All topics live in `rotation` (ordered list).
+- `rotation_pos` advances each week (wraps around).
+- On wrap: every topic advances to its next subtopic index.
+- Topics that exhaust all subtopics + niche_topics retire to completed_topics.
 """
 
 import json
 import sys
 import os
-import copy
+from unittest.mock import patch
 
 import pytest
 
@@ -22,190 +21,190 @@ from run import advance_state
 
 REPO_ROOT = os.path.join(os.path.dirname(__file__), "..")
 
+# Fake taxonomy used by _subtopic_count inside advance_state.
+# Each topic has 2 subtopics + 2 niche_topics = 4 total sub-passes.
+FAKE_SUBTOPIC_COUNT = 4
 
-# ── Fixtures ───────────────────────────────────────────────────────────────────
 
-def make_state(current_topic="topic_a", current_day=1, queue=None, completed=None):
+def _patch_count(n=FAKE_SUBTOPIC_COUNT):
+    """Patch _subtopic_count so tests don't need a real taxonomy file."""
+    return patch("run._subtopic_count", return_value=n)
+
+
+def make_state(rotation=None, rotation_pos=0, subtopic_progress=None,
+               current_day=1, completed=None):
+    if rotation is None:
+        rotation = ["topic_a", "topic_b", "topic_c"]
+    if subtopic_progress is None:
+        subtopic_progress = {t: 0 for t in rotation}
     return {
         "current_week": "2026-19",
-        "current_topic_id": current_topic,
         "current_day": current_day,
-        "completed_topics": completed or [],
-        "queue": queue if queue is not None else ["topic_b", "topic_c"],
+        "rotation": list(rotation),
+        "rotation_pos": rotation_pos,
+        "subtopic_progress": dict(subtopic_progress),
+        "completed_topics": list(completed or []),
     }
 
 
 # ── Day counter ────────────────────────────────────────────────────────────────
 
-def test_day_increments_normally():
-    for start_day in range(1, 7):
-        state = make_state(current_day=start_day)
+def test_day_increments_days_1_to_6():
+    with _patch_count():
+        for start in range(1, 7):
+            state = make_state(current_day=start)
+            result = advance_state(state)
+            assert result["current_day"] == start + 1
+            assert result["rotation_pos"] == 0  # topic unchanged
+
+
+def test_day_7_triggers_rotation():
+    with _patch_count():
+        state = make_state(current_day=7)
         result = advance_state(state)
-        assert result["current_day"] == start_day + 1
-        assert result["current_topic_id"] == "topic_a"
+        assert result["current_day"] == 1
+        assert result["rotation_pos"] == 1  # moved to topic_b
 
 
-def test_day_does_not_increment_past_7_without_topic_change():
-    # Day 7 should trigger topic change, not day 8
-    state = make_state(current_day=7)
-    result = advance_state(state)
-    assert result["current_day"] == 1
-    assert result["current_topic_id"] != "topic_a" or not result["queue"]
+# ── rotation_pos advancement ───────────────────────────────────────────────────
 
-
-# ── Topic advancement at day 7 ─────────────────────────────────────────────────
-
-def test_topic_advances_at_day_7():
-    state = make_state(current_day=7, queue=["topic_b", "topic_c"])
-    result = advance_state(state)
-    assert result["current_topic_id"] == "topic_b"
-    assert result["current_day"] == 1
-
-
-def test_completed_topic_moved_to_completed_list():
-    state = make_state(current_topic="topic_a", current_day=7, queue=["topic_b"])
-    result = advance_state(state)
-    assert "topic_a" in result["completed_topics"]
-
-
-def test_queue_shrinks_after_topic_advance():
-    state = make_state(current_day=7, queue=["topic_b", "topic_c", "topic_d"])
-    result = advance_state(state)
-    assert "topic_b" not in result["queue"]
-    assert len(result["queue"]) == 2  # topic_c, topic_d remain
-
-
-# ── THE BUG: completed topic must never restart ────────────────────────────────
-
-def test_completed_topic_not_in_queue_after_advance():
-    """The bug: consensus_algorithms was in queue[0] AND current_topic_id.
-    After advance, it was popped from queue and set as current again."""
-    state = make_state(
-        current_topic="topic_a",
-        current_day=7,
-        queue=["topic_a", "topic_b", "topic_c"],  # topic_a duplicated in queue
-    )
-    result = advance_state(state)
-    assert result["current_topic_id"] != "topic_a", (
-        "Completed topic restarted — the queue duplication bug!"
-    )
-    assert "topic_a" not in result["queue"], (
-        "Completed topic still lurking in queue"
-    )
-
-
-def test_completed_topic_not_current_after_advance():
-    state = make_state(current_topic="alpha", current_day=7, queue=["alpha", "beta"])
-    result = advance_state(state)
-    assert result["current_topic_id"] == "beta"
-    assert "alpha" in result["completed_topics"]
-    assert "alpha" not in result["queue"]
-
-
-def test_multiple_duplicates_in_queue_all_removed():
-    state = make_state(
-        current_topic="topic_a",
-        current_day=7,
-        queue=["topic_a", "topic_b", "topic_a", "topic_c"],
-    )
-    result = advance_state(state)
-    assert "topic_a" not in result["queue"]
-    assert result["current_topic_id"] == "topic_b"
-
-
-# ── New current topic must not remain in queue ────────────────────────────────
-
-def test_new_current_topic_removed_from_queue():
-    """After advancing, the new current_topic_id must not also be in queue
-    (or it will restart next time this topic completes)."""
-    state = make_state(
-        current_topic="topic_a",
-        current_day=7,
-        queue=["topic_b", "topic_b", "topic_c"],  # topic_b duplicated
-    )
-    result = advance_state(state)
-    assert result["current_topic_id"] == "topic_b"
-    assert "topic_b" not in result["queue"], (
-        "New current topic still in queue — will restart after its week"
-    )
-
-
-def test_next_topic_queue_is_clean():
-    state = make_state(current_day=7, queue=["topic_b", "topic_c", "topic_d"])
-    result = advance_state(state)
-    current = result["current_topic_id"]
-    assert current not in result["queue"]
-
-
-# ── Empty queue ────────────────────────────────────────────────────────────────
-
-def test_empty_queue_handled_gracefully():
-    state = make_state(current_day=7, queue=[])
-    # Should not raise
-    result = advance_state(state)
-    assert result["current_day"] == 1
-
-
-# ── Full week simulation ───────────────────────────────────────────────────────
-
-def test_full_week_cycle():
-    """Simulate 7 days → topic changes → 7 more days → next topic changes."""
-    state = make_state(
-        current_topic="topic_a",
-        current_day=1,
-        queue=["topic_b", "topic_c"],
-    )
-    for day in range(1, 7):
+def test_rotation_pos_advances_each_week():
+    with _patch_count():
+        state = make_state(rotation_pos=0, current_day=7)
         state = advance_state(state)
-    assert state["current_day"] == 7
-    assert state["current_topic_id"] == "topic_a"
+        assert state["rotation_pos"] == 1
 
-    # Day 7 — advance to next topic
-    state = advance_state(state)
-    assert state["current_topic_id"] == "topic_b"
-    assert state["current_day"] == 1
-    assert "topic_a" in state["completed_topics"]
-    assert "topic_b" not in state["queue"]
-
-    # Another full week on topic_b
-    for _ in range(6):
+        state["current_day"] = 7
         state = advance_state(state)
-    state = advance_state(state)
-
-    assert state["current_topic_id"] == "topic_c"
-    assert state["current_day"] == 1
-    assert "topic_b" in state["completed_topics"]
-    assert "topic_c" not in state["queue"]
+        assert state["rotation_pos"] == 2
 
 
-# ── state/progress.json on-disk integrity ─────────────────────────────────────
-
-def test_progress_json_current_topic_not_in_queue():
-    """The current_topic_id must never appear in the queue."""
-    path = os.path.join(REPO_ROOT, "state", "progress.json")
-    with open(path) as f:
-        state = json.load(f)
-    current = state["current_topic_id"]
-    assert current not in state["queue"], (
-        f"current_topic_id '{current}' is also in queue — restart bug waiting to happen"
-    )
+def test_rotation_pos_wraps_at_end():
+    with _patch_count():
+        # rotation has 3 topics; pos 2 → wraps to 0
+        state = make_state(rotation_pos=2, current_day=7)
+        result = advance_state(state)
+        assert result["rotation_pos"] == 0
 
 
-def test_progress_json_no_duplicate_queue_entries():
-    path = os.path.join(REPO_ROOT, "state", "progress.json")
-    with open(path) as f:
-        state = json.load(f)
-    queue = state["queue"]
-    assert len(queue) == len(set(queue)), (
-        f"Duplicate entries in queue: {[t for t in queue if queue.count(t) > 1]}"
-    )
+# ── subtopic_progress on full-pass wrap ───────────────────────────────────────
 
+def test_subtopic_progress_increments_on_wrap():
+    with _patch_count(n=4):
+        state = make_state(rotation_pos=2, current_day=7)  # last topic → wrap
+        result = advance_state(state)
+        for topic_id in result["rotation"]:
+            assert result["subtopic_progress"][topic_id] == 1
+
+
+def test_subtopic_progress_does_not_increment_mid_rotation():
+    with _patch_count(n=4):
+        state = make_state(rotation_pos=0, current_day=7)  # not yet wrapping
+        result = advance_state(state)
+        # Still on rotation pass 1; no topic advanced to sub 1 yet
+        for topic_id in result["rotation"]:
+            assert result["subtopic_progress"][topic_id] == 0
+
+
+# ── topic exhaustion and completion ───────────────────────────────────────────
+
+def test_exhausted_topic_removed_from_rotation():
+    with _patch_count(n=1):
+        # Each topic has only 1 sub; after one full pass they're all done
+        state = make_state(rotation_pos=2, current_day=7)
+        result = advance_state(state)
+        assert result["rotation"] == []
+        assert set(result["completed_topics"]) == {"topic_a", "topic_b", "topic_c"}
+
+
+def test_only_exhausted_topics_removed():
+    # topic_a has 2 subs, topic_b has 1 (exhausted after 1 pass), topic_c has 2
+    def count_for(topic_id):
+        return 1 if topic_id == "topic_b" else 2
+
+    with patch("run._subtopic_count", side_effect=count_for):
+        state = make_state(
+            rotation=["topic_a", "topic_b", "topic_c"],
+            rotation_pos=2,       # full pass completing
+            subtopic_progress={"topic_a": 0, "topic_b": 0, "topic_c": 0},
+            current_day=7,
+        )
+        result = advance_state(state)
+        assert "topic_b" not in result["rotation"]
+        assert "topic_b" in result["completed_topics"]
+        assert "topic_a" in result["rotation"]
+        assert "topic_c" in result["rotation"]
+
+
+def test_exhausted_topic_removed_from_subtopic_progress():
+    with _patch_count(n=1):
+        state = make_state(rotation_pos=2, current_day=7)
+        result = advance_state(state)
+        for tid in result["completed_topics"]:
+            assert tid not in result["subtopic_progress"]
+
+
+# ── Full rotation simulation ───────────────────────────────────────────────────
+
+def test_full_rotation_two_topics_two_subs():
+    """
+    2 topics × 2 subtopics × 7 days each = 28 total daily steps.
+    After each 7 days one step of this plays out:
+      Week 1: topic_a sub0 → rotation_pos 1
+      Week 2: topic_b sub0 → wrap → both advance to sub1
+      Week 3: topic_a sub1 → rotation_pos 1
+      Week 4: topic_b sub1 → wrap → both exhausted → completed
+    """
+    with _patch_count(n=2):
+        state = make_state(
+            rotation=["topic_a", "topic_b"],
+            rotation_pos=0,
+            subtopic_progress={"topic_a": 0, "topic_b": 0},
+            current_day=1,
+        )
+
+        # 6 days of topic_a sub0
+        for _ in range(6):
+            state = advance_state(state)
+        assert state["rotation_pos"] == 0
+        assert state["current_day"] == 7
+
+        # Day 7: advance to topic_b sub0
+        state = advance_state(state)
+        assert state["rotation_pos"] == 1
+        assert state["subtopic_progress"]["topic_a"] == 0  # no increment yet
+
+        # Days 1–7 of topic_b sub0 (wraps rotation → both go to sub1)
+        for _ in range(6):
+            state["current_day"] = state["current_day"] if state["current_day"] < 7 else 1
+            state = advance_state(state)
+        state = advance_state(state)  # day 7 of topic_b → wrap
+        assert state["rotation_pos"] == 0
+        assert state["subtopic_progress"].get("topic_a", 0) == 1
+        assert state["subtopic_progress"].get("topic_b", 0) == 1
+
+        # Now both topics are on sub1. Run topic_a sub1 for 7 days.
+        for _ in range(6):
+            state = advance_state(state)
+        state = advance_state(state)
+        assert state["rotation_pos"] == 1  # moved to topic_b sub1
+
+        # Run topic_b sub1 for 7 days → wrap → both exhausted
+        for _ in range(6):
+            state = advance_state(state)
+        state = advance_state(state)
+        assert set(state["completed_topics"]) == {"topic_a", "topic_b"}
+        assert state["rotation"] == []
+
+
+# ── progress.json on-disk integrity ───────────────────────────────────────────
 
 def test_progress_json_required_fields():
     path = os.path.join(REPO_ROOT, "state", "progress.json")
     with open(path) as f:
         state = json.load(f)
-    for field in ["current_topic_id", "current_day", "current_week", "queue", "completed_topics"]:
+    for field in ["current_day", "current_week", "rotation", "rotation_pos",
+                  "subtopic_progress", "completed_topics"]:
         assert field in state, f"Missing field '{field}' in progress.json"
 
 
@@ -213,14 +212,41 @@ def test_progress_json_day_in_valid_range():
     path = os.path.join(REPO_ROOT, "state", "progress.json")
     with open(path) as f:
         state = json.load(f)
-    assert 1 <= state["current_day"] <= 7, f"current_day={state['current_day']} out of range"
+    assert 1 <= state["current_day"] <= 7
 
 
-def test_progress_json_completed_topics_not_in_queue():
+def test_progress_json_rotation_pos_in_bounds():
     path = os.path.join(REPO_ROOT, "state", "progress.json")
     with open(path) as f:
         state = json.load(f)
-    for topic in state["completed_topics"]:
-        assert topic not in state["queue"], (
-            f"Completed topic '{topic}' still in queue"
-        )
+    rotation = state["rotation"]
+    pos = state["rotation_pos"]
+    assert 0 <= pos < len(rotation), (
+        f"rotation_pos {pos} out of bounds for rotation of length {len(rotation)}"
+    )
+
+
+def test_progress_json_no_duplicate_rotation_entries():
+    path = os.path.join(REPO_ROOT, "state", "progress.json")
+    with open(path) as f:
+        state = json.load(f)
+    rotation = state["rotation"]
+    assert len(rotation) == len(set(rotation)), (
+        f"Duplicate entries in rotation: {[t for t in rotation if rotation.count(t) > 1]}"
+    )
+
+
+def test_progress_json_all_rotation_topics_have_subtopic_progress():
+    path = os.path.join(REPO_ROOT, "state", "progress.json")
+    with open(path) as f:
+        state = json.load(f)
+    missing = [t for t in state["rotation"] if t not in state["subtopic_progress"]]
+    assert not missing, f"Topics in rotation missing from subtopic_progress: {missing}"
+
+
+def test_progress_json_completed_topics_not_in_rotation():
+    path = os.path.join(REPO_ROOT, "state", "progress.json")
+    with open(path) as f:
+        state = json.load(f)
+    overlap = set(state["completed_topics"]) & set(state["rotation"])
+    assert not overlap, f"Topics in both completed_topics and rotation: {overlap}"

@@ -54,16 +54,34 @@ def test_depth_and_breadth_arcs_differ():
 
 def test_build_search_queries_returns_list():
     topic = {"name": "Raft", "subtopics": ["leader election", "log replication"], "niche_topics": ["Multi-Raft"]}
-    queries = build_search_queries(topic, day=1, depth_mode="depth_first")
+    queries = build_search_queries(topic, day=1, depth_mode="depth_first", subtopic_idx=0)
     assert isinstance(queries, list)
     assert len(queries) >= 1
-    assert queries[0] == "Raft"
+    # Primary query should incorporate the topic and subtopic
+    assert any("Raft" in q or "leader election" in q for q in queries)
 
 
-def test_build_search_queries_day5_includes_niche():
-    topic = {"name": "Raft", "subtopics": ["a", "b", "c"], "niche_topics": ["Multi-Raft", "EPaxos"]}
-    queries = build_search_queries(topic, day=5, depth_mode="depth_first")
-    assert any("Multi-Raft" in q or "EPaxos" in q for q in queries)
+def test_build_search_queries_focuses_on_current_subtopic():
+    topic = {"name": "Raft", "subtopics": ["leader election", "log replication"], "niche_topics": ["Multi-Raft"]}
+    q0 = build_search_queries(topic, day=1, depth_mode="depth_first", subtopic_idx=0)
+    q1 = build_search_queries(topic, day=1, depth_mode="depth_first", subtopic_idx=1)
+    # Different subtopics → different queries
+    assert q0 != q1
+    assert any("leader election" in q for q in q0)
+    assert any("log replication" in q for q in q1)
+
+
+def test_build_search_queries_niche_subtopic_via_idx():
+    topic = {"name": "Raft", "subtopics": ["leader election"], "niche_topics": ["Multi-Raft", "EPaxos"]}
+    # subtopic_idx=1 → first niche topic
+    queries = build_search_queries(topic, day=3, depth_mode="depth_first", subtopic_idx=1)
+    assert any("Multi-Raft" in q for q in queries)
+
+
+def test_build_search_queries_day5_uses_internals_angle():
+    topic = {"name": "Raft", "subtopics": ["leader election"], "niche_topics": []}
+    queries = build_search_queries(topic, day=5, depth_mode="depth_first", subtopic_idx=0)
+    assert any("internals" in q or "implementation" in q for q in queries)
 
 
 # ── load_topic ─────────────────────────────────────────────────────────────────
@@ -242,12 +260,32 @@ def test_research_returns_bundle(
     mock_hn.return_value = [
         Article(title="HN Raft post", url="https://hn.example.com/1", snippet="HN post", source="HackerNews", depth_tag="mid")
     ]
-    bundle = research("consensus_algorithms", day=1)
+    bundle = research("consensus_algorithms", day=1, subtopic_idx=0)
     assert isinstance(bundle, ResearchBundle)
     assert bundle.topic_id == "consensus_algorithms"
     assert bundle.day == 1
     assert bundle.depth_mode == "depth_first"
+    assert bundle.subtopic != ""   # subtopic resolved from taxonomy
     assert len(bundle.articles) >= 1
+
+
+@patch("researcher.fetch_youtube_transcripts", return_value=[])
+@patch("researcher.fetch_rss_feeds", return_value=[])
+@patch("researcher.fetch_reddit", return_value=[])
+@patch("researcher.fetch_core", return_value=[])
+@patch("researcher.fetch_semantic_scholar", return_value=[])
+@patch("researcher.fetch_arxiv", return_value=[])
+@patch("researcher.fetch_hackernews", return_value=[])
+@patch("researcher.fetch_wikipedia")
+def test_research_subtopic_idx_resolves_correctly(
+    mock_wiki, mock_hn, mock_arxiv, mock_s2, mock_core,
+    mock_reddit, mock_rss, mock_yt
+):
+    mock_wiki.return_value = []
+    mock_hn.return_value = []
+    bundle0 = research("consensus_algorithms", day=1, subtopic_idx=0)
+    bundle1 = research("consensus_algorithms", day=1, subtopic_idx=1)
+    assert bundle0.subtopic != bundle1.subtopic
 
 
 @patch("researcher.fetch_youtube_transcripts", return_value=[])
@@ -272,7 +310,7 @@ def test_research_deduplicates_urls(*mocks):
              p("researcher.fetch_reddit", return_value=[]), \
              p("researcher.fetch_rss_feeds", return_value=[]), \
              p("researcher.fetch_youtube_transcripts", return_value=[]):
-            bundle = research("consensus_algorithms", day=1)
+            bundle = research("consensus_algorithms", day=1, subtopic_idx=0)
         urls = [a.url for a in bundle.articles]
         assert len(urls) == len(set(urls)), "Duplicate URLs in research bundle"
 
@@ -282,6 +320,7 @@ def test_research_bundle_context_string_is_readable():
     bundle = ResearchBundle(
         topic_id="test",
         topic_name="Test Topic",
+        subtopic="Raft leader election",
         day=3,
         depth_mode="depth_first",
         day_focus="Internal mechanics",
@@ -290,6 +329,7 @@ def test_research_bundle_context_string_is_readable():
     )
     ctx = bundle.to_context_string()
     assert "Test Topic" in ctx
+    assert "Raft leader election" in ctx
     assert "Day 3" in ctx
     assert "Title A" in ctx
     assert "Book A" in ctx

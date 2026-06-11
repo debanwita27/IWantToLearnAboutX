@@ -1,7 +1,7 @@
 {
   "_comment": "Updated daily by GitHub Action. rotation_pos advances each week; wraps cause all topics to move to next subtopic. Do not edit manually.",
   "current_week": "2026-23",
-  "current_day": 5,
+  "current_day": 6,
   "rotation": [
     "consensus_algorithms",
     "quantum_mechanics",
